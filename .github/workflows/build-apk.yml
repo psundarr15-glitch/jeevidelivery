@@ -1,0 +1,182 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      # Generates/updates the android/ platform folder to match the
+      # Flutter SDK version on this runner. Safe to run on an existing
+      # project: it does not overwrite lib/ or pubspec.yaml.
+      - name: Ensure Android platform files exist
+        run: flutter create --platforms=android --org com.jeevi --project-name delivery_partner_app .
+
+      # Generates android/app/src/main/res/mipmap-*/ic_launcher.png from
+      # assets/icon/icon.png + icon_foreground.png. Must run after
+      # "Ensure Android platform files exist" above, since that's what
+      # creates the android/ folder these icons get written into - and
+      # since that folder isn't committed to the repo, this has to be
+      # regenerated on every CI run rather than done once locally.
+      - name: Generate app icons
+        run: dart run flutter_launcher_icons
+
+      # `flutter create` only adds INTERNET permission to the *debug*
+      # manifest by default. Without it in the main manifest, release
+      # APKs get no network access at all - so we add it here, plus the
+      # location/camera permissions this app actually uses (live
+      # tracking + document photo uploads at signup).
+      - name: Ensure required permissions in release manifest
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
+            sed -i 's#<manifest xmlns:android="http://schemas.android.com/apk/res/android">#<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.INTERNET" />#' "$MANIFEST"
+          fi
+          if ! grep -q "android.permission.ACCESS_FINE_LOCATION" "$MANIFEST"; then
+            sed -i 's#<manifest xmlns:android="http://schemas.android.com/apk/res/android">#<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />#' "$MANIFEST"
+          fi
+          if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+            sed -i 's#<manifest xmlns:android="http://schemas.android.com/apk/res/android">#<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.CAMERA" />#' "$MANIFEST"
+          fi
+          cat "$MANIFEST"
+
+      # Background/terminated-app pushes are shown directly by the FCM
+      # SDK, which needs to be told about a status-bar icon via this
+      # meta-data tag - otherwise those notifications fall back to a
+      # generic letter badge even though foreground ones (shown via our
+      # own flutter_local_notifications call) use the right icon.
+      - name: Install notification status-bar icon
+        run: |
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/drawable-$density"
+            cp "assets/icon/notification/ic_stat_notify_$density.png" \
+               "android/app/src/main/res/drawable-$density/ic_stat_notify.png"
+          done
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if ! grep -q "com.google.firebase.messaging.default_notification_icon" "$MANIFEST"; then
+            sed -i 's#</application>#    <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_notify" />\n</application>#' "$MANIFEST"
+          fi
+          if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
+            sed -i 's#<manifest xmlns:android="http://schemas.android.com/apk/res/android">#<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />#' "$MANIFEST"
+          fi
+
+      # file_picker pulls in flutter_plugin_android_lifecycle, which
+      # requires apps to compile against Android API 36+. android/app/
+      # build.gradle.kts isn't committed (regenerated every run by
+      # `flutter create` above), so this has to be patched back in
+      # every time.
+      - name: Bump compileSdk to 36 (required by flutter_plugin_android_lifecycle)
+        run: |
+          APP_GRADLE=android/app/build.gradle.kts
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' "$APP_GRADLE"
+          grep -n "compileSdk" "$APP_GRADLE"
+
+      # flutter_local_notifications requires Android core library
+      # desugaring to be enabled, or the release build fails at
+      # :app:checkReleaseAarMetadata. build.gradle.kts isn't committed,
+      # so this has to be patched back in every run.
+      - name: Enable core library desugaring (required by flutter_local_notifications)
+        run: |
+          APP_GRADLE=android/app/build.gradle.kts
+          if ! grep -q "isCoreLibraryDesugaringEnabled" "$APP_GRADLE"; then
+            sed -i '0,/compileOptions {/s//compileOptions {\n        isCoreLibraryDesugaringEnabled = true/' "$APP_GRADLE"
+          fi
+          if ! grep -q "coreLibraryDesugaring(" "$APP_GRADLE"; then
+            if grep -q "^dependencies {" "$APP_GRADLE"; then
+              sed -i '0,/^dependencies {/s//dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")/' "$APP_GRADLE"
+            else
+              printf '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n' >> "$APP_GRADLE"
+            fi
+          fi
+
+      # Firebase push notifications need google-services.json (from
+      # Firebase Console -> Project Settings -> your Android app) and the
+      # Google Services Gradle plugin applied. The json is decoded from a
+      # repo secret so it's never committed to the repository.
+      #
+      # Setup (one-time):
+      #   1. Firebase Console -> Add Android app -> package name
+      #      com.jeevi.delivery_partner_app -> download google-services.json
+      #      (can be a new Android app inside the SAME Firebase project the
+      #      customer app already uses, or its own project — either works)
+      #   2. base64 -w0 google-services.json
+      #   3. Repo -> Settings -> Secrets and variables -> Actions ->
+      #      New repository secret -> name it
+      #      DELIVERY_GOOGLE_SERVICES_JSON_BASE64, paste the base64 output
+      - name: Set up Firebase (google-services.json + Gradle plugin, if configured)
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.DELIVERY_GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "DELIVERY_GOOGLE_SERVICES_JSON_BASE64 secret not set - building without Firebase. See build-apk.yml comments for setup steps."
+            exit 0
+          fi
+
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+
+          ROOT_FILE=android/settings.gradle.kts
+          if ! grep -q "plugins {" "$ROOT_FILE" 2>/dev/null; then
+            ROOT_FILE=android/build.gradle.kts
+          fi
+          APP_GRADLE=android/app/build.gradle.kts
+
+          if ! grep -q "com.google.gms.google-services" "$ROOT_FILE"; then
+            sed -i '0,/plugins {/s//plugins {\n    id("com.google.gms.google-services") version "4.4.2" apply false/' "$ROOT_FILE"
+          fi
+          if ! grep -q "com.google.gms.google-services" "$APP_GRADLE"; then
+            sed -i '0,/plugins {/s//plugins {\n    id("com.google.gms.google-services")/' "$APP_GRADLE"
+          fi
+
+      # Caches Gradle/Kotlin artifacts across runs.
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Maven Central occasionally returns 429 (Too Many Requests) to CI
+      # runners. Retry a few times with a short backoff instead of
+      # failing the whole workflow on a transient network error.
+      - name: Build release APK (with retry)
+        run: |
+          for attempt in 1 2 3 4; do
+            echo "Build attempt $attempt..."
+            if flutter build apk --release; then
+              echo "Build succeeded."
+              exit 0
+            fi
+            echo "Build failed, waiting before retry..."
+            sleep $((attempt * 30))
+          done
+          echo "All attempts failed."
+          exit 1
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-partner-app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk

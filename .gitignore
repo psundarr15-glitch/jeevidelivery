@@ -1,0 +1,20 @@
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+*.iml
+.idea/
+
+android/
+ios/
+web/
+linux/
+macos/
+windows/
+
+# (android/, ios/, etc. are generated automatically by the GitHub
+#  Actions workflow via `flutter create`, so they don't need to be
+#  committed — one less thing to keep in sync with your Flutter version.)
