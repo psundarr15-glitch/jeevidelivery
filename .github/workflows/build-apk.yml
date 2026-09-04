@@ -134,6 +134,29 @@ jobs:
 
           echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
 
+          # google-services.json only works for the exact package name(s)
+          # it was downloaded for. Applying the Gradle plugin with a file
+          # that has no matching client fails the build outright at
+          # :app:processReleaseGoogleServices - so check first and skip
+          # applying the plugin (build without Firebase) instead of
+          # guaranteeing 4 failed retries on a config problem no amount
+          # of retrying fixes.
+          EXPECTED_PACKAGE="com.jeevi.delivery_partner_app"
+          FOUND_PACKAGES=$(python3 -c "
+          import json
+          with open('android/app/google-services.json') as f:
+              data = json.load(f)
+          names = [c['client_info']['android_client_info']['package_name'] for c in data.get('client', [])]
+          print('\n'.join(names))
+          ")
+          echo "google-services.json contains: $FOUND_PACKAGES"
+          if ! echo "$FOUND_PACKAGES" | grep -qx "$EXPECTED_PACKAGE"; then
+            echo "::warning::google-services.json has no client for '$EXPECTED_PACKAGE' (found: $(echo $FOUND_PACKAGES | tr '\n' ' ')). Building WITHOUT Firebase/push notifications this run."
+            echo "::warning::Fix: Firebase Console -> your project -> Add app (Android) -> package name exactly '$EXPECTED_PACKAGE' -> download google-services.json -> base64 -w0 it -> update the DELIVERY_GOOGLE_SERVICES_JSON_BASE64 secret."
+            rm android/app/google-services.json
+            exit 0
+          fi
+
           ROOT_FILE=android/settings.gradle.kts
           if ! grep -q "plugins {" "$ROOT_FILE" 2>/dev/null; then
             ROOT_FILE=android/build.gradle.kts
