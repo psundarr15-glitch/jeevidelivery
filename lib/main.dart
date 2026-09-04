@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
-import 'screens/orders/order_detail_screen.dart';
+import 'screens/orders/order_router_screen.dart';
 import 'services/notification_service.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -43,7 +43,7 @@ class DeliveryPartnerApp extends StatelessWidget {
         onGenerateRoute: (settings) {
           if (settings.name == '/order-detail') {
             final orderId = settings.arguments as int;
-            return MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: orderId));
+            return MaterialPageRoute(builder: (_) => OrderRouterScreen(orderId: orderId));
           }
           return null;
         },

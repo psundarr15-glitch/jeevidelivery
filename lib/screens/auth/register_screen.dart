@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ])
       key: TextEditingController(),
   };
+  final _otpController = TextEditingController();
   String _vehicleType = 'bike';
   File? _photo;
   File? _idProof;
@@ -29,12 +31,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _error;
   String? _success;
 
+  // Phone OTP verification, inline before the rest of the form is usable.
+  bool _otpSent = false;
+  bool _phoneVerified = false;
+  bool _otpLoading = false;
+  String? _otpError;
+  Timer? _cooldownTimer;
+  int _cooldown = 0;
+
   @override
   void dispose() {
     for (final c in _controllers.values) {
       c.dispose();
     }
+    _otpController.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() => _cooldown = 30);
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (_cooldown <= 1) {
+        t.cancel();
+        setState(() => _cooldown = 0);
+      } else {
+        setState(() => _cooldown--);
+      }
+    });
+  }
+
+  Future<void> _sendPhoneOtp() async {
+    final phone = _controllers['phone']!.text.trim();
+    if (phone.length < 10) {
+      setState(() => _otpError = 'Enter a valid mobile number first');
+      return;
+    }
+    setState(() { _otpLoading = true; _otpError = null; });
+    try {
+      await AuthService.sendOtp(phone: phone, purpose: 'register');
+      setState(() => _otpSent = true);
+      _startCooldown();
+    } catch (e) {
+      setState(() => _otpError = e.toString());
+    } finally {
+      if (mounted) setState(() => _otpLoading = false);
+    }
+  }
+
+  Future<void> _confirmPhoneOtp() async {
+    if (_otpController.text.trim().length != 6) {
+      setState(() => _otpError = 'Enter the 6-digit code');
+      return;
+    }
+    setState(() { _otpLoading = true; _otpError = null; });
+    try {
+      await AuthService.verifyRegisterOtp(phone: _controllers['phone']!.text.trim(), otp: _otpController.text.trim());
+      setState(() => _phoneVerified = true);
+    } catch (e) {
+      setState(() => _otpError = e.toString());
+    } finally {
+      if (mounted) setState(() => _otpLoading = false);
+    }
   }
 
   Future<void> _pickDob() async {
@@ -62,6 +121,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    if (!_phoneVerified) {
+      setState(() => _otpError = 'Please verify your mobile number first');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; _success = null; });
     try {
@@ -104,6 +167,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
+  Widget _phoneVerificationBlock() {
+    if (_phoneVerified) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green, size: 18),
+            SizedBox(width: 6),
+            Text('Mobile number verified', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _controllers['phone'],
+                  enabled: !_otpSent,
+                  keyboardType: TextInputType.phone,
+                  decoration: _dec('Phone number'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: _otpLoading || (_otpSent && _cooldown > 0) ? null : _sendPhoneOtp,
+                child: Text(_otpSent ? (_cooldown > 0 ? '${_cooldown}s' : 'Resend') : 'Send OTP'),
+              ),
+            ],
+          ),
+          if (_otpSent) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: _dec('6-digit code').copyWith(counterText: ''),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _otpLoading ? null : _confirmPhoneOtp,
+                  child: _otpLoading
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Confirm'),
+                ),
+              ],
+            ),
+          ],
+          if (_otpError != null) ...[
+            const SizedBox(height: 6),
+            Text(_otpError!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_success != null) {
@@ -135,11 +265,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const _SectionTitle('Verify your mobile number'),
+                _phoneVerificationBlock(),
+
                 const _SectionTitle('Basic details'),
                 _field('name', 'Full name'),
                 _field('email', 'Email', type: TextInputType.emailAddress),
                 _field('password', 'Password'),
-                _field('phone', 'Phone number', type: TextInputType.phone),
                 TextFormField(
                   controller: _controllers['dob'],
                   readOnly: true,

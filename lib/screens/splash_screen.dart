@@ -18,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _check() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 1100));
     final loggedIn = await AuthService.isLoggedIn();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -28,17 +28,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppTheme.primary,
-      body: Center(
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.two_wheeler, color: Colors.white, size: 72),
-            SizedBox(height: 16),
-            Text('JEEVI Partner', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 24),
-            CircularProgressIndicator(color: Colors.white),
+            const Spacer(flex: 3),
+            Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.14), shape: BoxShape.circle),
+              child: const Icon(Icons.delivery_dining, color: Colors.white, size: 76),
+            ),
+            const SizedBox(height: 28),
+            const Text('JEEVI', style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            const Text('FOODIE', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w300, letterSpacing: 6)),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+              decoration: BoxDecoration(color: AppTheme.gold, borderRadius: BorderRadius.circular(20)),
+              child: const Text('PARTNER', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, letterSpacing: 2, fontSize: 12)),
+            ),
+            const Spacer(flex: 3),
+            const Text('Deliver Happiness', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Earn More!', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 28),
+            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.4)),
+            const SizedBox(height: 40),
           ],
         ),
       ),

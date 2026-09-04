@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/root_shell.dart';
 import 'register_screen.dart';
+import 'otp_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  final _phone = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
@@ -21,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _email.dispose();
+    _phone.dispose();
     _password.dispose();
     super.dispose();
   }
@@ -30,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
     try {
-      await AuthService.login(email: _email.text.trim(), password: _password.text);
+      await AuthService.login(phone: _phone.text.trim(), password: _password.text);
       NotificationService.registerCurrentToken().catchError((_) {});
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
@@ -47,27 +48,24 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF5),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
-                const Icon(Icons.two_wheeler, color: AppTheme.primary, size: 56),
-                const SizedBox(height: 12),
-                const Text('Partner Login', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text('Sign in to start accepting deliveries', style: TextStyle(color: Colors.grey.shade600)),
-                const SizedBox(height: 28),
+                const Text('Welcome Partner!', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Text('Login to continue', style: TextStyle(color: Colors.grey.shade600, fontSize: 15)),
+                const SizedBox(height: 32),
                 TextFormField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Enter your email' : null,
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Mobile Number', prefixIcon: Icon(Icons.phone_android_outlined)),
+                  validator: (v) => (v == null || v.trim().length < 10) ? 'Enter a valid mobile number' : null,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
@@ -84,25 +82,59 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
                   onFieldSubmitted: (_) => _submit(),
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OtpLoginScreen())),
+                    child: const Text('Forgot Password?', style: TextStyle(color: AppTheme.primary)),
+                  ),
+                ),
                 if (_error != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
                   Text(_error!, style: const TextStyle(color: Colors.red)),
                 ],
-                const SizedBox(height: 22),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _loading ? null : _submit,
                     child: _loading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Log In'),
+                        : const Text('Login'),
                   ),
                 ),
                 const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('or', style: TextStyle(color: Colors.grey.shade500))),
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OtpLoginScreen())),
+                    child: const Text('Login with OTP'),
+                  ),
+                ),
+                const SizedBox(height: 28),
                 Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                    child: const Text("New partner? Join as a delivery partner"),
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                      children: [
+                        const TextSpan(text: "Don't have an account? "),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: GestureDetector(
+                            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                            child: const Text('Register', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

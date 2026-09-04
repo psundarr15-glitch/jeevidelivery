@@ -9,6 +9,19 @@ class Partner {
   final String? photo;
   final String? vehicleType;
   final String? vehicleNumber;
+  final String? dob;
+  final String? city;
+  final String? district;
+  final String? pincode;
+  final String? aadhaarNumber;
+  final String? licenseNumber;
+  final String? rcNumber;
+  final String? idProofDocument;
+  final String? rcDocument;
+  final String? bankAccountHolder;
+  final String? bankAccountNumber;
+  final String? bankIfsc;
+  final double walletBalance;
 
   Partner({
     required this.id,
@@ -21,6 +34,19 @@ class Partner {
     this.photo,
     this.vehicleType,
     this.vehicleNumber,
+    this.dob,
+    this.city,
+    this.district,
+    this.pincode,
+    this.aadhaarNumber,
+    this.licenseNumber,
+    this.rcNumber,
+    this.idProofDocument,
+    this.rcDocument,
+    this.bankAccountHolder,
+    this.bankAccountNumber,
+    this.bankIfsc,
+    this.walletBalance = 0,
   });
 
   factory Partner.fromJson(Map<String, dynamic> j) => Partner(
@@ -34,6 +60,19 @@ class Partner {
         photo: j['photo']?.toString(),
         vehicleType: j['vehicle_type']?.toString(),
         vehicleNumber: j['vehicle_number']?.toString(),
+        dob: j['dob']?.toString(),
+        city: j['city']?.toString(),
+        district: j['district']?.toString(),
+        pincode: j['pincode']?.toString(),
+        aadhaarNumber: j['aadhaar_number']?.toString(),
+        licenseNumber: j['license_number']?.toString(),
+        rcNumber: j['rc_number']?.toString(),
+        idProofDocument: j['id_proof_document']?.toString(),
+        rcDocument: j['rc_document']?.toString(),
+        bankAccountHolder: j['bank_account_holder']?.toString(),
+        bankAccountNumber: j['bank_account_number']?.toString(),
+        bankIfsc: j['bank_ifsc']?.toString(),
+        walletBalance: double.tryParse(j['wallet_balance']?.toString() ?? '') ?? 0,
       );
 
   Partner copyWith({bool? isAvailable}) => Partner(
@@ -47,5 +86,18 @@ class Partner {
         photo: photo,
         vehicleType: vehicleType,
         vehicleNumber: vehicleNumber,
+        dob: dob,
+        city: city,
+        district: district,
+        pincode: pincode,
+        aadhaarNumber: aadhaarNumber,
+        licenseNumber: licenseNumber,
+        rcNumber: rcNumber,
+        idProofDocument: idProofDocument,
+        rcDocument: rcDocument,
+        bankAccountHolder: bankAccountHolder,
+        bankAccountNumber: bankAccountNumber,
+        bankIfsc: bankIfsc,
+        walletBalance: walletBalance,
       );
 }

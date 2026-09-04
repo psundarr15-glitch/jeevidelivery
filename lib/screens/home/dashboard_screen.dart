@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/delivery_order.dart';
 import '../../services/delivery_service.dart';
+import '../../services/auth_service.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
-import '../orders/order_detail_screen.dart';
+import '../auth/login_screen.dart';
+import '../orders/order_flow_router.dart';
+import '../orders/my_orders_screen.dart';
+import '../home/earnings_screen.dart';
+import '../wallet/wallet_screen.dart';
+import '../profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,14 +22,14 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   Future<DashboardData>? _future;
   Timer? _poll;
+  final Set<int> _seenPendingIds = {};
+  bool _firstLoad = true;
+  bool _popupShowing = false;
 
   @override
   void initState() {
     super.initState();
     _refresh();
-    // Light polling so newly-broadcast orders show up without a manual
-    // pull-to-refresh — there's no push-notification channel for
-    // delivery partners yet (see backend notes).
     _poll = Timer.periodic(const Duration(seconds: 20), (_) => _refresh(silent: true));
   }
 
@@ -38,9 +44,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!silent) setState(() => _future = future);
     try {
       final data = await future;
+      _checkForNewOrders(data.pendingOrders);
       if (silent && mounted) setState(() => _future = Future.value(data));
     } catch (_) {
       // silent polling failures shouldn't interrupt whatever's on screen
+    }
+  }
+
+  void _checkForNewOrders(List<DeliveryOrder> pending) {
+    final partner = context.read<AppState>().partner;
+    final ids = pending.map((o) => o.id).toSet();
+    if (_firstLoad) {
+      // Don't pop up for orders that were already pending before this
+      // screen opened - only genuinely new ones.
+      _seenPendingIds.addAll(ids);
+      _firstLoad = false;
+      return;
+    }
+    final newIds = ids.difference(_seenPendingIds);
+    _seenPendingIds.addAll(ids);
+    if (newIds.isNotEmpty && (partner?.isAvailable ?? false) && !_popupShowing && mounted) {
+      _popupShowing = true;
+      openOrder(context, newIds.first).whenComplete(() => _popupShowing = false);
     }
   }
 
@@ -50,54 +75,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF3EC),
+      drawer: _AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
-          child: Column(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              _AvailabilityBar(isAvailable: partner?.isAvailable ?? false),
-              Expanded(
-                child: FutureBuilder<DashboardData>(
-                  future: _future,
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting && snap.data == null) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snap.hasError && snap.data == null) {
-                      return ListView(children: [
-                        const SizedBox(height: 80),
-                        Center(child: Text('${snap.error}', style: TextStyle(color: Colors.grey.shade600))),
-                      ]);
-                    }
-                    final data = snap.data!;
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                      children: [
-                        _EarningsRow(earnings: data.earnings),
-                        const SizedBox(height: 20),
-                        if (data.activeOrders.isNotEmpty) ...[
-                          const _SectionHeader('Active deliveries'),
-                          ...data.activeOrders.map((o) => _OrderCard(order: o, mode: _CardMode.active, onChanged: _refresh)),
-                          const SizedBox(height: 16),
-                        ],
-                        const _SectionHeader('New order requests'),
-                        if (data.pendingOrders.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: Text(
-                                (partner?.isAvailable ?? false) ? 'No new orders right now — we\'ll show them here as they come in.' : 'You\'re offline. Go online to start receiving orders.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                            ),
-                          )
-                        else
-                          ...data.pendingOrders.map((o) => _OrderCard(order: o, mode: _CardMode.pending, onChanged: _refresh)),
-                      ],
-                    );
-                  },
-                ),
+              _TopBar(partnerName: partner?.name, isAvailable: partner?.isAvailable ?? false),
+              const SizedBox(height: 18),
+              FutureBuilder<DashboardData>(
+                future: _future,
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting && snap.data == null) {
+                    return const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator()));
+                  }
+                  if (snap.hasError && snap.data == null) {
+                    return Padding(padding: const EdgeInsets.only(top: 60), child: Center(child: Text('${snap.error}', style: TextStyle(color: Colors.grey.shade600))));
+                  }
+                  final data = snap.data!;
+                  return Column(
+                    children: [
+                      _EarningsCard(earnings: data.earnings),
+                      const SizedBox(height: 14),
+                      _StatsRow(earnings: data.earnings, activeCount: data.activeOrders.length, rating: partner?.rating ?? 0),
+                      const SizedBox(height: 22),
+                      _QuickActions(),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -107,41 +113,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _AvailabilityBar extends StatelessWidget {
+class _TopBar extends StatelessWidget {
+  final String? partnerName;
   final bool isAvailable;
-  const _AvailabilityBar({required this.isAvailable});
+  const _TopBar({required this.partnerName, required this.isAvailable});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Builder(
+          builder: (context) => IconButton(icon: const Icon(Icons.menu), onPressed: () => Scaffold.of(context).openDrawer()),
+        ),
+        Expanded(
+          child: Text(
+            partnerName == null ? 'Hello, Partner 👋' : 'Hello, ${partnerName!.split(' ').first} 👋',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Text(isAvailable ? 'Online' : 'Offline', style: TextStyle(color: isAvailable ? Colors.green.shade700 : Colors.grey.shade600, fontWeight: FontWeight.w600)),
+        Switch(
+          value: isAvailable,
+          activeThumbColor: Colors.green,
+          onChanged: (_) async {
+            try {
+              await context.read<AppState>().toggleAvailability();
+            } catch (e) {
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _EarningsCard extends StatelessWidget {
+  final EarningsSummary earnings;
+  const _EarningsCard({required this.earnings});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isAvailable ? AppTheme.primary : Colors.grey.shade400,
-        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppTheme.primary, AppTheme.primaryDark]),
+        borderRadius: BorderRadius.circular(18),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(isAvailable ? Icons.wifi_tethering : Icons.wifi_off, color: Colors.white),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              isAvailable ? "You're online" : "You're offline",
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15.5),
-            ),
+          const Text("Today's Earnings", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('₹${earnings.todayEarnings.toStringAsFixed(0)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+            ],
           ),
-          Switch(
-            value: isAvailable,
-            activeThumbColor: Colors.white,
-            onChanged: (_) async {
-              try {
-                await context.read<AppState>().toggleAvailability();
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-                }
-              }
-            },
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.trending_up, color: Colors.white, size: 16),
+              const SizedBox(width: 4),
+              Text('${earnings.completedToday} deliveries completed today', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+            ],
           ),
         ],
       ),
@@ -149,29 +188,31 @@ class _AvailabilityBar extends StatelessWidget {
   }
 }
 
-class _EarningsRow extends StatelessWidget {
+class _StatsRow extends StatelessWidget {
   final EarningsSummary earnings;
-  const _EarningsRow({required this.earnings});
+  final int activeCount;
+  final double rating;
+  const _StatsRow({required this.earnings, required this.activeCount, required this.rating});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _EarningsCard(label: 'Today', value: '${earnings.completedToday}', sub: 'orders')),
+        Expanded(child: _StatBox(value: '${earnings.completedToday}', label: 'Orders Delivered', icon: Icons.inventory_2_outlined)),
         const SizedBox(width: 10),
-        Expanded(child: _EarningsCard(label: 'This week', value: '₹${earnings.weeklyEarnings.toStringAsFixed(0)}', sub: '${earnings.weeklyOrders} orders')),
+        Expanded(child: _StatBox(value: '$activeCount', label: 'Ongoing', icon: Icons.pending_actions_outlined)),
         const SizedBox(width: 10),
-        Expanded(child: _EarningsCard(label: 'This month', value: '₹${earnings.monthlyEarnings.toStringAsFixed(0)}', sub: '${earnings.monthlyOrders} orders')),
+        Expanded(child: _StatBox(value: rating > 0 ? rating.toStringAsFixed(1) : '—', label: 'Rating', icon: Icons.star_border)),
       ],
     );
   }
 }
 
-class _EarningsCard extends StatelessWidget {
-  final String label;
+class _StatBox extends StatelessWidget {
   final String value;
-  final String sub;
-  const _EarningsCard({required this.label, required this.value, required this.sub});
+  final String label;
+  final IconData icon;
+  const _StatBox({required this.value, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -180,108 +221,94 @@ class _EarningsCard extends StatelessWidget {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
       child: Column(
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-          Text(sub, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+          Icon(icon, color: AppTheme.primary, size: 20),
+          const SizedBox(height: 6),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
         ],
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String text;
-  const _SectionHeader(this.text);
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      );
-}
-
-enum _CardMode { pending, active }
-
-class _OrderCard extends StatefulWidget {
-  final DeliveryOrder order;
-  final _CardMode mode;
-  final Future<void> Function() onChanged;
-  const _OrderCard({required this.order, required this.mode, required this.onChanged});
-
-  @override
-  State<_OrderCard> createState() => _OrderCardState();
-}
-
-class _OrderCardState extends State<_OrderCard> {
-  bool _busy = false;
-
-  Future<void> _act(Future<void> Function() action) async {
-    setState(() => _busy = true);
-    try {
-      await action();
-      await widget.onChanged();
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
+class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final o = widget.order;
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: o.id)),
-      ).then((_) => widget.onChanged()),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    final items = [
+      (Icons.receipt_long_outlined, 'My Orders', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyOrdersScreen()))),
+      (Icons.currency_rupee, 'Earnings', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EarningsScreen()))),
+      (Icons.account_balance_wallet_outlined, 'Wallet', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WalletScreen()))),
+      (Icons.person_outline, 'Profile', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Align(alignment: Alignment.centerLeft, child: Text('Quick Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
+        const SizedBox(height: 12),
+        Row(
+          children: items
+              .map((it) => Expanded(
+                    child: InkWell(
+                      onTap: it.$3,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Column(
+                        children: [
+                          CircleAvatar(radius: 26, backgroundColor: Colors.white, child: Icon(it.$1, color: AppTheme.primary)),
+                          const SizedBox(height: 6),
+                          Text(it.$2, style: const TextStyle(fontSize: 11.5), textAlign: TextAlign.center),
+                        ],
+                      ),
+                    ),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final partner = context.watch<AppState>().partner;
+    return Drawer(
+      child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(child: Text(o.orderCode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
-                Text('₹${o.total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(o.restaurantName, style: const TextStyle(fontSize: 13.5)),
-            Text('to ${o.customerName}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
-            if (o.distanceKm != null) Text('${o.distanceKm!.toStringAsFixed(1)} km away', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-            const SizedBox(height: 8),
-            if (widget.mode == _CardMode.pending)
-              Row(
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _busy ? null : () => _act(() => DeliveryService.rejectOrder(o.id)),
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.grey.shade700),
-                      child: const Text('Reject'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _busy ? null : () => _act(() => DeliveryService.acceptOrder(o.id)),
-                      child: _busy
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Accept'),
-                    ),
-                  ),
+                  const CircleAvatar(radius: 26, backgroundColor: AppTheme.primary, child: Icon(Icons.person, color: Colors.white)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(partner?.name ?? 'Partner', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis)),
                 ],
-              )
-            else
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Chip(
-                  label: Text(o.orderStatus.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11)),
-                  backgroundColor: AppTheme.primary,
-                ),
               ),
+            ),
+            const Divider(height: 1),
+            ListTile(leading: const Icon(Icons.person_outline), title: const Text('Profile'), onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            }),
+            ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: const Text('Wallet'), onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WalletScreen()));
+            }),
+            const Spacer(),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                await AuthService.logout();
+                if (context.mounted) {
+                  context.read<AppState>().clear();
+                  Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (r) => false);
+                }
+              },
+            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

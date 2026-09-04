@@ -2,6 +2,7 @@ import '../config/api_config.dart';
 import '../models/partner.dart';
 import '../models/delivery_order.dart';
 import '../models/order_detail.dart';
+import '../models/wallet.dart';
 import 'api_client.dart';
 
 class DeliveryService {
@@ -27,6 +28,22 @@ class DeliveryService {
   static Future<OrderDetail> orderDetails(int orderId) async {
     final res = await ApiClient.get(ApiConfig.orderDetails(orderId));
     return OrderDetail.fromJson(res);
+  }
+
+  /// status: 'all' | 'active' | 'delivered' | 'cancelled'
+  static Future<List<DeliveryOrder>> myOrders(String status) async {
+    final res = await ApiClient.get(ApiConfig.myOrders(status));
+    return (res['orders'] as List? ?? []).map((e) => DeliveryOrder.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  static Future<WalletData> wallet() async {
+    final res = await ApiClient.get(ApiConfig.wallet);
+    return WalletData.fromJson(res);
+  }
+
+  static Future<String> withdraw(double amount) async {
+    final res = await ApiClient.post(ApiConfig.walletWithdraw, {'amount': amount});
+    return res['message']?.toString() ?? 'Withdrawal requested.';
   }
 
   static Future<void> acceptOrder(int orderId) => ApiClient.post(ApiConfig.acceptOrder(orderId));

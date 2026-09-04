@@ -5,12 +5,18 @@ class ApiConfig {
 
   static const String register = '$baseUrl/delivery/register';
   static const String login = '$baseUrl/delivery/login';
+  static const String otpSend = '$baseUrl/delivery/otp/send';
+  static const String otpLogin = '$baseUrl/delivery/otp/login';
+  static const String otpVerifyRegister = '$baseUrl/delivery/otp/verify-register';
   static const String logout = '$baseUrl/delivery/logout';
 
   static const String me = '$baseUrl/delivery/me';
   static const String deviceToken = '$baseUrl/delivery/device-token';
   static const String toggleAvailability = '$baseUrl/delivery/toggle-availability';
   static const String dashboard = '$baseUrl/delivery/dashboard';
+  static String myOrders(String status) => '$baseUrl/delivery/orders?status=$status';
+  static const String wallet = '$baseUrl/delivery/wallet';
+  static const String walletWithdraw = '$baseUrl/delivery/wallet/withdraw';
   static String orderDetails(int orderId) => '$baseUrl/delivery/orders/$orderId';
   static String acceptOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/accept';
   static String rejectOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/reject';

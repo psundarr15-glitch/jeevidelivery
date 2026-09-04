@@ -3,6 +3,7 @@ class DeliveryOrder {
   final String orderCode;
   final String orderStatus;
   final double total;
+  final double deliveryFee;
   final String paymentMethod;
   final String? placedAt;
   final String customerName;
@@ -17,6 +18,7 @@ class DeliveryOrder {
     required this.orderCode,
     required this.orderStatus,
     required this.total,
+    required this.deliveryFee,
     required this.paymentMethod,
     this.placedAt,
     required this.customerName,
@@ -32,6 +34,7 @@ class DeliveryOrder {
         orderCode: j['order_code']?.toString() ?? '',
         orderStatus: j['order_status']?.toString() ?? 'placed',
         total: double.tryParse(j['total']?.toString() ?? '') ?? 0,
+        deliveryFee: double.tryParse(j['delivery_fee']?.toString() ?? '') ?? 0,
         paymentMethod: j['payment_method']?.toString() ?? 'cod',
         placedAt: j['placed_at']?.toString(),
         customerName: j['customer_name']?.toString() ?? '',
@@ -46,6 +49,7 @@ class DeliveryOrder {
 /// Weekly/monthly/today earnings summary, part of the dashboard payload.
 class EarningsSummary {
   final int completedToday;
+  final double todayEarnings;
   final int weeklyOrders;
   final double weeklyEarnings;
   final int monthlyOrders;
@@ -53,6 +57,7 @@ class EarningsSummary {
 
   EarningsSummary({
     required this.completedToday,
+    required this.todayEarnings,
     required this.weeklyOrders,
     required this.weeklyEarnings,
     required this.monthlyOrders,
@@ -61,6 +66,7 @@ class EarningsSummary {
 
   factory EarningsSummary.fromJson(Map<String, dynamic> j) => EarningsSummary(
         completedToday: int.tryParse(j['completed_today']?.toString() ?? '') ?? 0,
+        todayEarnings: double.tryParse(j['today_earnings']?.toString() ?? '') ?? 0,
         weeklyOrders: int.tryParse(j['weekly_orders']?.toString() ?? '') ?? 0,
         weeklyEarnings: double.tryParse(j['weekly_earnings']?.toString() ?? '') ?? 0,
         monthlyOrders: int.tryParse(j['monthly_orders']?.toString() ?? '') ?? 0,
