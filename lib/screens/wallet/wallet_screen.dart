@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/wallet.dart';
 import '../../services/delivery_service.dart';
 import '../../theme.dart';
+import '../../widgets/app_error_view.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -58,7 +59,7 @@ class _WalletScreenState extends State<WalletScreen> {
           future: _future,
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-            if (snap.hasError) return ListView(children: [const SizedBox(height: 80), Center(child: Text('${snap.error}'))]);
+            if (snap.hasError) return ListView(children: [const SizedBox(height: 40), AppErrorView(error: snap.error!, onRetry: _refresh)]);
             final w = snap.data!;
             return ListView(
               padding: const EdgeInsets.all(16),

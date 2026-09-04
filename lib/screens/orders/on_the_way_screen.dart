@@ -7,6 +7,7 @@ import '../../services/delivery_service.dart';
 import '../../services/location_tracker.dart';
 import '../../theme.dart';
 import 'order_delivered_screen.dart';
+import '../../widgets/app_error_view.dart';
 
 class OnTheWayScreen extends StatefulWidget {
   final int orderId;
@@ -55,7 +56,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snap.hasError) return Center(child: Text('${snap.error}'));
+          if (snap.hasError) return Center(child: AppErrorView(error: snap.error!));
           final o = snap.data!;
           final lat = o.address?.lat;
           final lng = o.address?.lng;

@@ -3,6 +3,7 @@ import '../../models/delivery_order.dart';
 import '../../services/delivery_service.dart';
 import '../../theme.dart';
 import '../wallet/wallet_screen.dart';
+import '../../widgets/app_error_view.dart';
 
 enum _Period { daily, weekly, monthly }
 
@@ -38,7 +39,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           future: _future,
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-            if (snap.hasError) return ListView(children: [const SizedBox(height: 80), Center(child: Text('${snap.error}'))]);
+            if (snap.hasError) return ListView(children: [const SizedBox(height: 40), AppErrorView(error: snap.error!, onRetry: _refresh)]);
             final e = snap.data!.earnings;
 
             final double amount;

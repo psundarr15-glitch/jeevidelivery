@@ -7,7 +7,8 @@ import 'register_screen.dart';
 import 'otp_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool sessionExpired;
+  const LoginScreen({super.key, this.sessionExpired = false});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -60,6 +61,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text('Welcome Partner!', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 Text('Login to continue', style: TextStyle(color: Colors.grey.shade600, fontSize: 15)),
+                if (widget.sessionExpired) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFFFFF3EC), borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.primary.withOpacity(0.25))),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.info_outline, color: AppTheme.primary, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(child: Text('Your session expired. Please log in again.', style: TextStyle(color: AppTheme.primaryDark, fontSize: 13))),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _phone,

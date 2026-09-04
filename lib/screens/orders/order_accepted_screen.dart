@@ -4,6 +4,7 @@ import '../../models/order_detail.dart';
 import '../../services/delivery_service.dart';
 import '../../theme.dart';
 import 'order_picked_up_screen.dart';
+import '../../widgets/app_error_view.dart';
 
 class OrderAcceptedScreen extends StatefulWidget {
   final int orderId;
@@ -54,7 +55,7 @@ class _OrderAcceptedScreenState extends State<OrderAcceptedScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snap.hasError) return Center(child: Text('${snap.error}'));
+          if (snap.hasError) return Center(child: AppErrorView(error: snap.error!));
           final o = snap.data!;
           return ListView(
             padding: const EdgeInsets.all(16),

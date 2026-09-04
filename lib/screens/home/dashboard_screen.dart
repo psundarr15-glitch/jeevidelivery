@@ -12,6 +12,7 @@ import '../orders/my_orders_screen.dart';
 import '../home/earnings_screen.dart';
 import '../wallet/wallet_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../widgets/app_error_view.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -91,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator()));
                   }
                   if (snap.hasError && snap.data == null) {
-                    return Padding(padding: const EdgeInsets.only(top: 60), child: Center(child: Text('${snap.error}', style: TextStyle(color: Colors.grey.shade600))));
+                    return Padding(padding: const EdgeInsets.only(top: 40), child: AppErrorView(error: snap.error!, onRetry: _refresh));
                   }
                   final data = snap.data!;
                   return Column(

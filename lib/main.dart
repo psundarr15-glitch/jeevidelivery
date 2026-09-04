@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
+import 'navigation.dart';
 import 'screens/splash_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/orders/order_router_screen.dart';
 import 'services/notification_service.dart';
-
-final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +44,10 @@ class DeliveryPartnerApp extends StatelessWidget {
           if (settings.name == '/order-detail') {
             final orderId = settings.arguments as int;
             return MaterialPageRoute(builder: (_) => OrderRouterScreen(orderId: orderId));
+          }
+          if (settings.name == '/login') {
+            final sessionExpired = settings.arguments == 'session_expired';
+            return MaterialPageRoute(builder: (_) => LoginScreen(sessionExpired: sessionExpired));
           }
           return null;
         },

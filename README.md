@@ -16,6 +16,24 @@ will fail:
 
 ## What's built
 
+**Session handling** — a 401 on any authenticated request (token
+expired/revoked) now automatically signs the app out and returns to the
+login screen with a "Your session expired" banner, instead of leaving
+the raw "Invalid or expired token" backend message sitting on whatever
+screen the request happened to be on. Handled centrally in
+`ApiClient._decode`/`_handleUnauthorized`, and every screen's error
+state now goes through `AppErrorView` as a fallback (shows a proper
+"Please Login Again" button if the auto-redirect somehow didn't fire).
+Login itself still shows a normal inline error for wrong credentials —
+that 401 doesn't carry a token, so it's not treated as a session expiry.
+
+**Registration** is now a two-step wizard (progress bar, dashed-border
+photo/document upload boxes, rounded fields, pill-shaped buttons) —
+same visual language as the reference mockups, in the app's existing
+red/maroon theme rather than orange. Step 1 covers identity + inline
+phone-OTP verification + password (with the live strength checklist);
+step 2 covers address, vehicle, documents, bank details, and terms.
+
 **Auth**
 - Password login by **phone number** (matches the mockup's "Mobile
   Number" field — the backend's `login()` now checks `phone`, not email).
@@ -77,6 +95,11 @@ this app's package name (see the CI workflow's Firebase step).
 out for delivery, feeding the customer app's tracking map.
 
 ## Known gaps / follow-ups
+
+- **"Forgot Password?" and "Terms & Conditions" are placeholders.**
+  Forgot Password routes to the OTP-login flow (no separate
+  reset-password screen yet). The Terms & Conditions link opens a
+  placeholder dialog — no real terms content has been written yet.
 
 - **"Tips" and "Incentives" on the Earnings screen show ₹0.** There's no
   tipping or incentive mechanism anywhere in this codebase yet (the

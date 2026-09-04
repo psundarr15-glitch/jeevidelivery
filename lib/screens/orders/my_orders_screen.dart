@@ -3,6 +3,7 @@ import '../../models/delivery_order.dart';
 import '../../services/delivery_service.dart';
 import '../../theme.dart';
 import 'order_flow_router.dart';
+import '../../widgets/app_error_view.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -74,7 +75,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                if (snap.hasError) return Center(child: Text('${snap.error}'));
+                if (snap.hasError) return Center(child: AppErrorView(error: snap.error!));
                 final orders = snap.data ?? [];
                 if (orders.isEmpty) {
                   return Center(child: Text('No orders here yet.', style: TextStyle(color: Colors.grey.shade600)));
