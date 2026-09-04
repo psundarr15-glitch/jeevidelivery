@@ -159,6 +159,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final fields = _controllers.map((k, c) => MapEntry(k, c.text.trim()));
       fields['name'] = '${_firstName.text.trim()} ${_lastName.text.trim()}'.trim();
       fields['vehicle_type'] = _vehicleType;
+      // The registration form only collects one number now (the user
+      // says vehicle number and RC number are the same thing for these
+      // partners) — the backend still has a separate required rc_number
+      // column, so just mirror the value into it rather than showing a
+      // second, redundant field.
+      fields['rc_number'] = fields['vehicle_number'] ?? '';
       final message = await AuthService.register(
         fields: fields,
         photo: _photo,
@@ -355,12 +361,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 14),
           TextFormField(
-            controller: _controllers['rc_number'],
-            decoration: const InputDecoration(labelText: 'RC Number'),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
             controller: _controllers['license_number'],
             decoration: const InputDecoration(labelText: 'Driving License Number', hintText: 'L-XXX-XXX-XXX-XXX'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -376,7 +376,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _DocumentUpload(label: 'Upload ID Proof Document', file: _idProof, onPick: () => _pickDocument((f) => setState(() => _idProof = f)), onRemove: () => setState(() => _idProof = null)),
           const SizedBox(height: 14),
           _DocumentUpload(label: 'Upload RC Document', file: _rcDocument, onPick: () => _pickDocument((f) => setState(() => _rcDocument = f)), onRemove: () => setState(() => _rcDocument = null)),
-          const SizedBox(height: 22),
+          const SizedBox(height: 6),
+          Text('Accepted formats: PDF, JPG, JPEG, PNG', style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5)),
+          const SizedBox(height: 16),
           Text('Bank details (optional — add before your first payout)', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
           TextFormField(controller: _controllers['bank_account_holder'], decoration: const InputDecoration(labelText: 'Account Holder Name')),
