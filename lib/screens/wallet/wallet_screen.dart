@@ -245,7 +245,16 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
               const Align(alignment: Alignment.centerLeft, child: Text('History', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
               const SizedBox(height: 10),
               if (c.transactions.isEmpty)
-                Padding(padding: const EdgeInsets.only(top: 24), child: Center(child: Text('No COD collections yet.', style: TextStyle(color: Colors.grey.shade600))))
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: Center(
+                    child: Text(
+                      'No COD collections yet.\nThis fills in once you deliver a cash-on-delivery order.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+                )
               else
                 ...c.transactions.map(_cashTransactionRow),
             ],
