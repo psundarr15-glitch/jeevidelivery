@@ -113,9 +113,9 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
         title: const Text('Wallet'),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          indicatorColor: AppTheme.primary,
+          labelColor: AppTheme.primary,
+          unselectedLabelColor: Colors.grey,
           tabs: const [Tab(text: 'Earnings'), Tab(text: 'COD Cash')],
         ),
       ),
