@@ -4,6 +4,7 @@ import '../../services/delivery_service.dart';
 import '../../theme.dart';
 import '../../widgets/root_shell.dart';
 import '../../widgets/app_error_view.dart';
+import '../wallet/wallet_screen.dart';
 
 class OrderDeliveredScreen extends StatefulWidget {
   final int orderId;
@@ -35,7 +36,11 @@ class _OrderDeliveredScreenState extends State<OrderDeliveredScreen> {
           if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
           if (snap.hasError) return Center(child: AppErrorView(error: snap.error!));
           final o = snap.data!;
-          final cashToCollect = o.paymentMethod == 'cod' && o.paymentStatus != 'paid' ? o.total : 0;
+          // By the time this screen loads, the backend has already
+          // marked a COD order's payment_status 'paid' and credited
+          // cash_in_hand (see updateStatus()) — so this is a receipt of
+          // what already happened, not a pending amount still owed.
+          final wasCodCollection = o.paymentMethod == 'cod';
 
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -64,20 +69,29 @@ class _OrderDeliveredScreenState extends State<OrderDeliveredScreen> {
                           Text('₹${o.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 16)),
                         ],
                       ),
-                      if (cashToCollect > 0) ...[
+                      if (wasCodCollection) ...[
                         const Divider(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Cash to Collect', style: TextStyle(color: Colors.grey.shade600)),
-                            Text('₹${cashToCollect.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Row(children: const [Icon(Icons.check_circle, color: Colors.green, size: 16), SizedBox(width: 6), Text('Cash Collected')]),
+                            Text('₹${o.total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
                         ),
+                        const SizedBox(height: 4),
+                        Text('Added to your Cash in Hand — remit it to the office from the Wallet tab.', style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5)),
                       ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
+                if (wasCodCollection) ...[
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WalletScreen())),
+                    child: const Text('View Cash in Hand'),
+                  ),
+                ],
+                const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(

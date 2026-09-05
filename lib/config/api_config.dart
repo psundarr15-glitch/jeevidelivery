@@ -17,6 +17,8 @@ class ApiConfig {
   static String myOrders(String status) => '$baseUrl/delivery/orders?status=$status';
   static const String wallet = '$baseUrl/delivery/wallet';
   static const String walletWithdraw = '$baseUrl/delivery/wallet/withdraw';
+  static const String cash = '$baseUrl/delivery/cash';
+  static const String cashRemit = '$baseUrl/delivery/cash/remit';
   static String orderDetails(int orderId) => '$baseUrl/delivery/orders/$orderId';
   static String acceptOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/accept';
   static String rejectOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/reject';

@@ -96,6 +96,28 @@ out for delivery, feeding the customer app's tracking map.
 
 ## Known gaps / follow-ups
 
+**COD cash handling** — cash-on-delivery is tracked as its own liability,
+separate from wallet earnings, so a partner's COD collections never
+inflate what they've actually earned:
+- Marking a COD order delivered now requires an explicit in-app
+  confirmation ("Yes, I've collected it") before the status update goes
+  through — see the On the Way screen.
+- The backend then automatically records that collection
+  (`DeliveryCashTransactionModel::recordCollection`, credited to a new
+  `cash_in_hand` balance) and marks the order's `payment_status` as paid.
+- The Wallet screen now has two tabs: **Earnings** (unchanged) and
+  **COD Cash**, where the partner can see their cash-in-hand balance and
+  submit a "Remit Cash to Office" request.
+- Remittances stay `pending` until an admin confirms receipt on a new
+  **Admin → Cash Remittances** page (`/admin/cash-remittances`) — a
+  partner's own claim of having handed cash over isn't proof it arrived,
+  so `cash_in_hand` only decreases once an admin explicitly confirms it.
+  Admins can also reject a remittance with a reason.
+- New migration (`20260905000001_CreateDeliveryCashTable`) adds
+  `delivery_partners.cash_in_hand` and the `delivery_cash_transactions`
+  table — **run `php spark migrate`** after deploying.
+
+
 - **"Forgot Password?" and "Terms & Conditions" are placeholders.**
   Forgot Password routes to the OTP-login flow (no separate
   reset-password screen yet). The Terms & Conditions link opens a

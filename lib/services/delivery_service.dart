@@ -3,6 +3,7 @@ import '../models/partner.dart';
 import '../models/delivery_order.dart';
 import '../models/order_detail.dart';
 import '../models/wallet.dart';
+import '../models/cash.dart';
 import 'api_client.dart';
 
 class DeliveryService {
@@ -44,6 +45,21 @@ class DeliveryService {
   static Future<String> withdraw(double amount) async {
     final res = await ApiClient.post(ApiConfig.walletWithdraw, {'amount': amount});
     return res['message']?.toString() ?? 'Withdrawal requested.';
+  }
+
+  /// COD cash the partner is currently holding, separate from wallet
+  /// earnings — see the backend's DeliveryCashTransactionModel.
+  static Future<CashData> cash() async {
+    final res = await ApiClient.get(ApiConfig.cash);
+    return CashData.fromJson(res);
+  }
+
+  /// Declares cash was handed over to the office. This does NOT reduce
+  /// cash-in-hand immediately — it stays pending until an admin confirms
+  /// receipt (see the admin Cash Remittances screen).
+  static Future<String> remitCash(double amount, {String? note}) async {
+    final res = await ApiClient.post(ApiConfig.cashRemit, {'amount': amount, if (note != null && note.isNotEmpty) 'note': note});
+    return res['message']?.toString() ?? 'Remittance submitted.';
   }
 
   static Future<void> acceptOrder(int orderId) => ApiClient.post(ApiConfig.acceptOrder(orderId));

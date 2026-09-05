@@ -33,9 +33,30 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
-  Future<void> _reachedCustomer() async {
+  Future<void> _reachedCustomer(OrderDetail o) async {
+    final isCodPending = o.paymentMethod == 'cod' && o.paymentStatus != 'paid';
+    if (isCodPending) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Confirm cash collected'),
+          content: Text('Confirm you have collected ₹${o.total.toStringAsFixed(0)} in cash from ${o.customerName} before marking this order delivered.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not yet')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Yes, I've collected it")),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _busy = true);
     try {
+      // The backend records the COD cash-in-hand credit automatically
+      // the moment this flips an unpaid COD order to 'delivered' — see
+      // DeliveryApiController::updateStatus. The confirmation dialog
+      // above exists so the partner explicitly acknowledges it, not
+      // because the app itself does the bookkeeping.
       await DeliveryService.updateStatus(widget.orderId, 'delivered');
       LocationTracker.instance.stop();
       if (!mounted) return;
@@ -116,11 +137,11 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _busy ? null : _reachedCustomer,
+                        onPressed: _busy ? null : () => _reachedCustomer(o),
                         style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                         child: _busy
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('Reached Customer'),
+                            : Text(o.paymentMethod == 'cod' && o.paymentStatus != 'paid' ? 'Collect ₹${o.total.toStringAsFixed(0)} & Mark Delivered' : 'Reached Customer'),
                       ),
                     ),
                   ],
