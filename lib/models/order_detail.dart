@@ -49,6 +49,19 @@ class DeliveryAddressInfo {
       );
 }
 
+class OrderReview {
+  final int? restaurantRating;
+  final int? partnerRating;
+  final String? comment;
+  OrderReview({this.restaurantRating, this.partnerRating, this.comment});
+
+  factory OrderReview.fromJson(Map<String, dynamic> j) => OrderReview(
+        restaurantRating: j['rating'] == null ? null : int.tryParse(j['rating'].toString()),
+        partnerRating: j['partner_rating'] == null ? null : int.tryParse(j['partner_rating'].toString()),
+        comment: j['comment']?.toString(),
+      );
+}
+
 class OrderDetail {
   final int id;
   final String orderCode;
@@ -65,6 +78,7 @@ class OrderDetail {
   final RestaurantInfo restaurant;
   final DeliveryAddressInfo? address;
   final double? distanceKm;
+  final OrderReview? review;
 
   OrderDetail({
     required this.id,
@@ -82,6 +96,7 @@ class OrderDetail {
     required this.restaurant,
     this.address,
     this.distanceKm,
+    this.review,
   });
 
   factory OrderDetail.fromJson(Map<String, dynamic> j) {
@@ -102,6 +117,7 @@ class OrderDetail {
       restaurant: RestaurantInfo.fromJson((j['restaurant'] as Map?)?.cast<String, dynamic>() ?? {}),
       address: j['address'] == null ? null : DeliveryAddressInfo.fromJson((j['address'] as Map).cast<String, dynamic>()),
       distanceKm: j['distance_km'] == null ? null : double.tryParse(j['distance_km'].toString()),
+      review: j['review'] == null ? null : OrderReview.fromJson((j['review'] as Map).cast<String, dynamic>()),
     );
   }
 }

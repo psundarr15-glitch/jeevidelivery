@@ -12,6 +12,8 @@ class DeliveryOrder {
   final double? restaurantLat;
   final double? restaurantLng;
   final double? distanceKm;
+  final int? partnerRating;
+  final String? reviewComment;
 
   DeliveryOrder({
     required this.id,
@@ -27,6 +29,8 @@ class DeliveryOrder {
     this.restaurantLat,
     this.restaurantLng,
     this.distanceKm,
+    this.partnerRating,
+    this.reviewComment,
   });
 
   factory DeliveryOrder.fromJson(Map<String, dynamic> j) => DeliveryOrder(
@@ -43,6 +47,8 @@ class DeliveryOrder {
         restaurantLat: double.tryParse(j['restaurant_lat']?.toString() ?? ''),
         restaurantLng: double.tryParse(j['restaurant_lng']?.toString() ?? ''),
         distanceKm: j['distance_km'] == null ? null : double.tryParse(j['distance_km'].toString()),
+        partnerRating: j['partner_rating'] == null ? null : int.tryParse(j['partner_rating'].toString()),
+        reviewComment: j['review_comment']?.toString(),
       );
 }
 

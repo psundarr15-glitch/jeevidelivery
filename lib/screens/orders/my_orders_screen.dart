@@ -105,6 +105,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                     Text(o.restaurantName, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
                                     const SizedBox(height: 4),
                                     Text(o.orderStatus.replaceAll('_', ' ').toUpperCase(), style: TextStyle(color: _statusColor(o.orderStatus), fontWeight: FontWeight.w600, fontSize: 11.5)),
+                                    if (o.partnerRating != null) ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.star, color: Colors.amber, size: 14),
+                                          const SizedBox(width: 3),
+                                          Text('${o.partnerRating}/5 from customer', style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5)),
+                                        ],
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

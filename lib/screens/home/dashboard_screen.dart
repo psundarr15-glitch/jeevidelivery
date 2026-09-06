@@ -27,11 +27,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _firstLoad = true;
   bool _popupShowing = false;
 
+  // While online and not already showing a new-order popup, poll fast
+  // so a brand new order surfaces within ~2s of being placed — this is
+  // the foreground half of "new order should reach every online
+  // partner quickly"; the backend's repeated push (see
+  // CheckoutApiController::placeOrder) covers the backgrounded-app half.
+  // Falls back to a slow poll while offline since there's nothing
+  // time-sensitive to catch then.
+  static const _fastPoll = Duration(seconds: 2);
+  static const _slowPoll = Duration(seconds: 20);
+
   @override
   void initState() {
     super.initState();
     _refresh();
-    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _refresh(silent: true));
+    _scheduleNextPoll();
+  }
+
+  void _scheduleNextPoll() {
+    final isAvailable = context.read<AppState>().partner?.isAvailable ?? false;
+    final interval = (isAvailable && !_popupShowing) ? _fastPoll : _slowPoll;
+    _poll = Timer(interval, () async {
+      await _refresh(silent: true);
+      if (mounted) _scheduleNextPoll();
+    });
   }
 
   @override

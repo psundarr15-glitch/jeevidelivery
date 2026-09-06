@@ -84,6 +84,32 @@ class _OrderDeliveredScreenState extends State<OrderDeliveredScreen> {
                     ],
                   ),
                 ),
+                if (o.review?.partnerRating != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: const Color(0xFFFFF3EC), borderRadius: BorderRadius.circular(14)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Customer Rating', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: List.generate(5, (i) => Icon(
+                                i < o.review!.partnerRating! ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 22,
+                              )),
+                        ),
+                        if (o.review!.comment != null && o.review!.comment!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text('"${o.review!.comment}"', style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic, fontSize: 13)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
                 if (wasCodCollection) ...[
                   const SizedBox(height: 10),
                   TextButton(
