@@ -45,7 +45,7 @@ class DeliveryPartnerApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppState(),
       child: MaterialApp(
-        title: 'JEEVI Partner',
+        title: 'Jeevi Foodie Delivery',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         navigatorKey: navigatorKey,

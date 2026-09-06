@@ -32,6 +32,17 @@ jobs:
       - name: Ensure Android platform files exist
         run: flutter create --platforms=android --org com.jeevi --project-name delivery_partner_app .
 
+      # `flutter create` sets android:label to the Dart project name
+      # ("delivery_partner_app") by default - that's what would show
+      # under the icon on the home screen otherwise. android/ isn't
+      # committed, so this has to be reapplied every CI run, same as
+      # every other manifest patch below.
+      - name: Set app display name
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="[^"]*"/android:label="Jeevi Foodie Delivery"/' "$MANIFEST"
+          grep -n "android:label" "$MANIFEST"
+
       # Generates android/app/src/main/res/mipmap-*/ic_launcher.png from
       # assets/icon/icon.png + icon_foreground.png. Must run after
       # "Ensure Android platform files exist" above, since that's what

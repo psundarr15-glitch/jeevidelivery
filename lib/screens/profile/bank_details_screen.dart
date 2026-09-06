@@ -5,9 +5,9 @@ import '../../services/delivery_service.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
 
-enum _PayoutMethod { bank, upi }
-
-/// Lets a partner set/update their own payout details. Unlike
+/// Lets a partner set/update their own payout details. Both a bank
+/// account AND a UPI ID can be saved at once — the radio buttons just
+/// pick which one payouts should actually use as default. Unlike
 /// Personal/Vehicle/Documents (still read-only — see InfoDetailScreen),
 /// this one actually saves, via POST /delivery/profile/bank-details.
 class BankDetailsScreen extends StatefulWidget {
@@ -24,7 +24,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
   late final TextEditingController _accountNumber;
   late final TextEditingController _ifsc;
   late final TextEditingController _upi;
-  late _PayoutMethod _method;
+  late String _defaultMethod; // 'bank' | 'upi'
   bool _saving = false;
 
   @override
@@ -34,10 +34,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
     _accountNumber = TextEditingController(text: widget.partner.bankAccountNumber ?? '');
     _ifsc = TextEditingController(text: widget.partner.bankIfsc ?? '');
     _upi = TextEditingController(text: widget.partner.upiId ?? '');
-    // Whichever one already has something saved wins; defaults to Bank if neither does.
-    _method = (widget.partner.upiId != null && widget.partner.upiId!.isNotEmpty && (widget.partner.bankAccountNumber ?? '').isEmpty)
-        ? _PayoutMethod.upi
-        : _PayoutMethod.bank;
+    _defaultMethod = widget.partner.defaultPayoutMethod;
   }
 
   @override
@@ -49,15 +46,28 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
     super.dispose();
   }
 
+  bool get _hasBank => _accountNumber.text.trim().isNotEmpty && _ifsc.text.trim().isNotEmpty;
+  bool get _hasUpi => _upi.text.trim().isNotEmpty;
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_defaultMethod == 'bank' && !_hasBank) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add your bank account details before setting it as default.')));
+      return;
+    }
+    if (_defaultMethod == 'upi' && !_hasUpi) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add your UPI ID before setting it as default.')));
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final message = await DeliveryService.updateBankDetails(
-        bankAccountHolder: _method == _PayoutMethod.bank ? _holder.text.trim() : '',
-        bankAccountNumber: _method == _PayoutMethod.bank ? _accountNumber.text.trim() : '',
-        bankIfsc: _method == _PayoutMethod.bank ? _ifsc.text.trim() : '',
-        upiId: _method == _PayoutMethod.upi ? _upi.text.trim() : '',
+        bankAccountHolder: _holder.text.trim(),
+        bankAccountNumber: _accountNumber.text.trim(),
+        bankIfsc: _ifsc.text.trim(),
+        upiId: _upi.text.trim(),
+        defaultPayoutMethod: _defaultMethod,
       );
       if (!mounted) return;
       // Refresh the shared partner profile so Profile screen reflects the change immediately.
@@ -81,68 +91,69 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
           padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
+            onChanged: () => setState(() {}), // keeps the radio enable/disable state in sync as fields fill in
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Choose how you\'d like to receive payouts.', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                const SizedBox(height: 14),
-                Row(
+                Text('You can save both a bank account and a UPI ID — pick which one payouts should use below.', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                const SizedBox(height: 20),
+
+                _SectionCard(
+                  title: 'Bank Account',
+                  trailing: _DefaultRadio(
+                    label: 'Default',
+                    selected: _defaultMethod == 'bank',
+                    enabled: _hasBank,
+                    onTap: () => setState(() => _defaultMethod = 'bank'),
+                  ),
                   children: [
-                    Expanded(
-                      child: _MethodTile(
-                        label: 'Bank Account',
-                        icon: Icons.account_balance_outlined,
-                        selected: _method == _PayoutMethod.bank,
-                        onTap: () => setState(() => _method = _PayoutMethod.bank),
-                      ),
+                    TextFormField(
+                      controller: _holder,
+                      decoration: const InputDecoration(labelText: 'Account Holder Name'),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _MethodTile(
-                        label: 'UPI ID',
-                        icon: Icons.qr_code,
-                        selected: _method == _PayoutMethod.upi,
-                        onTap: () => setState(() => _method = _PayoutMethod.upi),
-                      ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _accountNumber,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Account Number'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _ifsc,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(labelText: 'IFSC Code', hintText: 'e.g. SBIN0001234'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        if (!RegExp(r'^[A-Za-z]{4}0[A-Z0-9]{6}$').hasMatch(v.trim())) return 'Enter a valid IFSC code';
+                        return null;
+                      },
                     ),
                   ],
                 ),
-                const SizedBox(height: 22),
-                if (_method == _PayoutMethod.bank) ...[
-                  TextFormField(
-                    controller: _holder,
-                    decoration: const InputDecoration(labelText: 'Account Holder Name'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+
+                const SizedBox(height: 16),
+
+                _SectionCard(
+                  title: 'UPI ID',
+                  trailing: _DefaultRadio(
+                    label: 'Default',
+                    selected: _defaultMethod == 'upi',
+                    enabled: _hasUpi,
+                    onTap: () => setState(() => _defaultMethod = 'upi'),
                   ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _accountNumber,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Account Number'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _ifsc,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(labelText: 'IFSC Code', hintText: 'e.g. SBIN0001234'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (!RegExp(r'^[A-Za-z]{4}0[A-Z0-9]{6}$').hasMatch(v.trim())) return 'Enter a valid IFSC code';
-                      return null;
-                    },
-                  ),
-                ] else ...[
-                  TextFormField(
-                    controller: _upi,
-                    decoration: const InputDecoration(labelText: 'UPI ID', hintText: 'e.g. yourname@okhdfcbank'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (!RegExp(r'^[\w.\-]{2,256}@[a-zA-Z]{2,64}$').hasMatch(v.trim())) return 'Enter a valid UPI ID';
-                      return null;
-                    },
-                  ),
-                ],
+                  children: [
+                    TextFormField(
+                      controller: _upi,
+                      decoration: const InputDecoration(labelText: 'UPI ID', hintText: 'e.g. yourname@okhdfcbank'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        if (!RegExp(r'^[\w.\-]{2,256}@[a-zA-Z]{2,64}$').hasMatch(v.trim())) return 'Enter a valid UPI ID';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -163,30 +174,60 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
   }
 }
 
-class _MethodTile extends StatelessWidget {
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget trailing;
+  final List<Widget> children;
+  const _SectionCard({required this.title, required this.trailing, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5)),
+              trailing,
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _DefaultRadio extends StatelessWidget {
   final String label;
-  final IconData icon;
   final bool selected;
+  final bool enabled;
   final VoidCallback onTap;
-  const _MethodTile({required this.label, required this.icon, required this.selected, required this.onTap});
+  const _DefaultRadio({required this.label, required this.selected, required this.enabled, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? AppTheme.primary : Colors.grey.shade300),
+          color: selected ? AppTheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: enabled ? AppTheme.primary : Colors.grey.shade300),
         ),
-        child: Column(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: selected ? Colors.white : AppTheme.primary),
-            const SizedBox(height: 6),
-            Text(label, style: TextStyle(color: selected ? Colors.white : Colors.black87, fontWeight: FontWeight.w600)),
+            Icon(selected ? Icons.check_circle : Icons.circle_outlined, size: 15, color: selected ? Colors.white : (enabled ? AppTheme.primary : Colors.grey.shade400)),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : (enabled ? AppTheme.primary : Colors.grey.shade400))),
           ],
         ),
       ),

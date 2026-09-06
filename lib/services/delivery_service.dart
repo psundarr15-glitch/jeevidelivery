@@ -12,19 +12,22 @@ class DeliveryService {
     return Partner.fromJson(res['partner'] as Map<String, dynamic>);
   }
 
-  /// Any of these left null/empty clears that field — e.g. saving just
-  /// a UPI ID with no bank fields is fine, and vice versa.
+  /// Both a bank account AND a UPI ID can be saved at once —
+  /// [defaultPayoutMethod] ('bank' | 'upi') just says which one payouts
+  /// should actually use.
   static Future<String> updateBankDetails({
     String? bankAccountHolder,
     String? bankAccountNumber,
     String? bankIfsc,
     String? upiId,
+    required String defaultPayoutMethod,
   }) async {
     final res = await ApiClient.post(ApiConfig.updateBankDetails, {
       'bank_account_holder': bankAccountHolder ?? '',
       'bank_account_number': bankAccountNumber ?? '',
       'bank_ifsc': bankIfsc ?? '',
       'upi_id': upiId ?? '',
+      'default_payout_method': defaultPayoutMethod,
     });
     return res['message']?.toString() ?? 'Payout details updated.';
   }

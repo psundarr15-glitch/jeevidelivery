@@ -22,6 +22,7 @@ class Partner {
   final String? bankAccountNumber;
   final String? bankIfsc;
   final String? upiId;
+  final String defaultPayoutMethod;
   final double walletBalance;
 
   Partner({
@@ -48,6 +49,7 @@ class Partner {
     this.bankAccountNumber,
     this.bankIfsc,
     this.upiId,
+    this.defaultPayoutMethod = 'bank',
     this.walletBalance = 0,
   });
 
@@ -75,6 +77,7 @@ class Partner {
         bankAccountNumber: j['bank_account_number']?.toString(),
         bankIfsc: j['bank_ifsc']?.toString(),
         upiId: j['upi_id']?.toString(),
+        defaultPayoutMethod: j['default_payout_method']?.toString() ?? 'bank',
         walletBalance: double.tryParse(j['wallet_balance']?.toString() ?? '') ?? 0,
       );
 
@@ -102,6 +105,7 @@ class Partner {
         bankAccountNumber: bankAccountNumber,
         bankIfsc: bankIfsc,
         upiId: upiId,
+        defaultPayoutMethod: defaultPayoutMethod,
         walletBalance: walletBalance,
       );
 }
