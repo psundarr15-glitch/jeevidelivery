@@ -12,6 +12,23 @@ class DeliveryService {
     return Partner.fromJson(res['partner'] as Map<String, dynamic>);
   }
 
+  /// Any of these left null/empty clears that field — e.g. saving just
+  /// a UPI ID with no bank fields is fine, and vice versa.
+  static Future<String> updateBankDetails({
+    String? bankAccountHolder,
+    String? bankAccountNumber,
+    String? bankIfsc,
+    String? upiId,
+  }) async {
+    final res = await ApiClient.post(ApiConfig.updateBankDetails, {
+      'bank_account_holder': bankAccountHolder ?? '',
+      'bank_account_number': bankAccountNumber ?? '',
+      'bank_ifsc': bankIfsc ?? '',
+      'upi_id': upiId ?? '',
+    });
+    return res['message']?.toString() ?? 'Payout details updated.';
+  }
+
   static Future<bool> toggleAvailability() async {
     final res = await ApiClient.post(ApiConfig.toggleAvailability);
     return res['is_available'] == true;

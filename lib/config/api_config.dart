@@ -11,6 +11,7 @@ class ApiConfig {
   static const String logout = '$baseUrl/delivery/logout';
 
   static const String me = '$baseUrl/delivery/me';
+  static const String updateBankDetails = '$baseUrl/delivery/profile/bank-details';
   static const String deviceToken = '$baseUrl/delivery/device-token';
   static const String toggleAvailability = '$baseUrl/delivery/toggle-availability';
   static const String dashboard = '$baseUrl/delivery/dashboard';

@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../theme.dart';
 import '../auth/login_screen.dart';
 import 'info_detail_screen.dart';
+import 'bank_details_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -88,11 +89,7 @@ class ProfileScreen extends StatelessWidget {
                 _NavTile(
                   icon: Icons.account_balance_outlined,
                   label: 'Bank Details',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InfoDetailScreen(title: 'Bank Details', fields: [
-                        MapEntry('Account Holder', partner.bankAccountHolder ?? ''),
-                        MapEntry('Account Number', partner.bankAccountNumber ?? ''),
-                        MapEntry('IFSC', partner.bankIfsc ?? ''),
-                      ]))),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => BankDetailsScreen(partner: partner))),
                 ),
                 _NavTile(icon: Icons.settings_outlined, label: 'Settings', onTap: () => _showSettings(context)),
                 _NavTile(icon: Icons.help_outline, label: 'Help & Support', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()))),

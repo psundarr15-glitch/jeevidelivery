@@ -9,9 +9,21 @@ import 'screens/auth/login_screen.dart';
 import 'screens/orders/order_router_screen.dart';
 import 'services/notification_service.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // runApp() first, always — the splash screen must paint on the very
+  // first frame. Firebase.initializeApp() + NotificationService.init()
+  // (which itself shows the OS "Allow notifications?" prompt on Android
+  // 13+) used to be awaited *before* runApp(), which meant nothing —
+  // not even the splash screen — rendered until that finished. That's
+  // what made the splash screen seem broken/frozen on first launch.
+  runApp(const DeliveryPartnerApp());
+
+  _initializeFirebase();
+}
+
+Future<void> _initializeFirebase() async {
   // Firebase.initializeApp() reads android/app/google-services.json
   // automatically on Android - no explicit FirebaseOptions needed here.
   try {
@@ -23,8 +35,6 @@ void main() async {
     // dashboard's 20s poll still surfaces new orders either way.
     debugPrint('Firebase/notifications not available: $e');
   }
-
-  runApp(const DeliveryPartnerApp());
 }
 
 class DeliveryPartnerApp extends StatelessWidget {

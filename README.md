@@ -98,7 +98,34 @@ workflow-ல Firebase step பாருங்க).
 seconds-க்கும் partner-ஓட location backend-க்கு போகும், customer app-ஓட
 tracking map-க்கு அதுதான் feed ஆகும்.
 
-## COD Cash Handling (Cash on Delivery)
+## புது Features (இந்த update)
+
+**Splash screen fix** — முன்னாடி `main()`-ல Firebase/notification setup
+முடியற வரைக்கும் `runApp()`-ஏ call ஆகல, அதனால splash screen (எதுவுமே)
+காணாம இருந்துச்சு. இப்போ `runApp()` உடனே call ஆகும், Firebase setup
+பின்னாடி background-ல நடக்கும்.
+
+**App close ஆனா தானா Offline** — Partner "Online"-ஆ இருந்து, 5 நிமிடம்
+(300 seconds) API-க்கு எந்த request-உம் வராம போச்சுன்னா (app
+close/kill ஆனது-ன்னு அர்த்தம்), **active order எதுவும் இல்லாம**
+இருந்தா, backend தானாகவே அவங்களை Offline-ஆ மாத்திடும் (delivery
+நடுவுல இது நடக்காது — active order இருக்கும் partner-ஐ offline
+பண்ணாது). `BaseApiController::authPartner()`-ல தான் இது check ஆகுது.
+
+**Bank Account / UPI ID — Profile-ல Edit பண்ணலாம்** — முன்னாடி
+Bank Details read-only-ஆ இருந்துச்சு. இப்போ Profile → Bank Details-ல
+Bank Account **அல்லது** UPI ID — எதுவேணும்-ன்னாலும் select பண்ணி
+save பண்ணலாம் (`POST /delivery/profile/bank-details`).
+
+**புது partner register பண்ணினா Admin approval வேணும்** — Register
+பண்ணின உடனே partner login பண்ண முடியாது ("your registration is under
+review" message வரும்). Admin panel → Delivery Partners page-ல
+"Pending Approval" section-ல partner-ஐ Approve/Reject பண்ணலாம்.
+Approve ஆன உடனே தான் partner login பண்ண முடியும். ஏற்கனவே இருக்கிற
+partners எல்லாரும் migration மூலமா தானா "approved"-ஆ set ஆகிடுவாங்க
+— யாரும் இதனால lock ஆகமாட்டாங்க.
+
+
 
 COD cash-ஐ partner-ஓட own earning-ஆ கணக்கு போடக்கூடாது-ன்னு, wallet
 earnings-ல இருந்து தனியா ஒரு "liability"-ஆ track பண்றோம்:
