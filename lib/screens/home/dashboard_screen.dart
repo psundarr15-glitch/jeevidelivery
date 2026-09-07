@@ -26,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final Set<int> _seenPendingIds = {};
   bool _firstLoad = true;
   bool _popupShowing = false;
+  bool? _lastKnownAvailability;
 
   // While online and not already showing a new-order popup, poll fast
   // so a brand new order surfaces within ~2s of being placed — this is
@@ -42,10 +43,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _refresh();
     _scheduleNextPoll();
+    // Without this, toggling online mid-wait doesn't take effect until
+    // whatever slow-poll cycle was already scheduled finishes — up to
+    // 20s of a partner sitting "online" but still on the old interval,
+    // which is exactly the bug: a partner going online seconds after an
+    // order was placed but not seeing it for ~20s. Reacting to the
+    // toggle immediately (cancel + reschedule + refresh right away)
+    // closes that gap instead of waiting for the next scheduled tick.
+    context.read<AppState>().addListener(_onAppStateChanged);
+  }
+
+  void _onAppStateChanged() {
+    final isAvailable = context.read<AppState>().partner?.isAvailable ?? false;
+    if (_lastKnownAvailability == isAvailable) return;
+    _lastKnownAvailability = isAvailable;
+    _poll?.cancel();
+    _refresh(silent: true);
+    _scheduleNextPoll();
   }
 
   void _scheduleNextPoll() {
     final isAvailable = context.read<AppState>().partner?.isAvailable ?? false;
+    _lastKnownAvailability = isAvailable;
     final interval = (isAvailable && !_popupShowing) ? _fastPoll : _slowPoll;
     _poll = Timer(interval, () async {
       await _refresh(silent: true);
@@ -56,6 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _poll?.cancel();
+    context.read<AppState>().removeListener(_onAppStateChanged);
     super.dispose();
   }
 
