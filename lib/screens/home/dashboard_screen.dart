@@ -23,18 +23,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   Future<DashboardData>? _future;
   Timer? _poll;
-  final Set<int> _seenPendingIds = {};
-  bool _firstLoad = true;
   bool _popupShowing = false;
   bool? _lastKnownAvailability;
 
-  // While online and not already showing a new-order popup, poll fast
-  // so a brand new order surfaces within ~2s of being placed — this is
-  // the foreground half of "new order should reach every online
-  // partner quickly"; the backend's repeated push (see
-  // CheckoutApiController::placeOrder) covers the backgrounded-app half.
-  // Falls back to a slow poll while offline since there's nothing
-  // time-sensitive to catch then.
+  // While online and not already showing a pending-order popup, poll
+  // fast so orders surface within ~2s — both a brand new order and any
+  // of a backlog of already-pending ones (see _checkForPendingOrder:
+  // as long as the partner is online and nothing is on screen, whatever
+  // is next in the pending list gets shown, so a partner works through
+  // all of them one after another instead of only ever seeing the
+  // first one until they restart the app). Falls back to a slow poll
+  // while offline since there's nothing time-sensitive to catch then.
   static const _fastPoll = Duration(seconds: 2);
   static const _slowPoll = Duration(seconds: 20);
 
@@ -84,42 +83,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!silent) setState(() => _future = future);
     try {
       final data = await future;
-      _checkForNewOrders(data.pendingOrders);
+      _checkForPendingOrder(data.pendingOrders);
       if (silent && mounted) setState(() => _future = Future.value(data));
     } catch (_) {
       // silent polling failures shouldn't interrupt whatever's on screen
     }
   }
 
-  void _checkForNewOrders(List<DeliveryOrder> pending) {
-    final partner = context.read<AppState>().partner;
-    final isAvailable = partner?.isAvailable ?? false;
-    final ids = pending.map((o) => o.id).toSet();
-
-    if (_firstLoad) {
-      _firstLoad = false;
-      // Only silently mark today's pending orders as "already seen" if
-      // the partner was already online when this screen loaded — for
-      // an online partner, these were presumably already shown in a
-      // previous session, so don't re-pop them on every relaunch.
-      // If the partner was OFFLINE at load time, leave the seen-list
-      // empty instead: that's the whole point of this fix — a partner
-      // who opens the app (or goes online) after an order was placed
-      // while everyone was offline must still get shown that order,
-      // not have it silently swallowed as "already seen" before they
-      // ever had a chance to see it.
-      if (isAvailable) {
-        _seenPendingIds.addAll(ids);
-      }
-      return;
-    }
-
-    final newIds = ids.difference(_seenPendingIds);
-    _seenPendingIds.addAll(ids);
-    if (newIds.isNotEmpty && isAvailable && !_popupShowing && mounted) {
-      _popupShowing = true;
-      openOrder(context, newIds.first).whenComplete(() => _popupShowing = false);
-    }
+  /// Shows the next pending order whenever the partner is online and
+  /// nothing is currently on screen — deliberately NOT "only the first
+  /// one ever seen": accepting or rejecting an order removes it from
+  /// this list on the next poll (accepted → assigned to someone,
+  /// rejected → excluded for this partner), so as long as more remain,
+  /// the next poll shows the next one. That's what makes working
+  /// through a backlog of several pending orders work without having
+  /// to restart the app between each one.
+  void _checkForPendingOrder(List<DeliveryOrder> pending) {
+    final isAvailable = context.read<AppState>().partner?.isAvailable ?? false;
+    if (pending.isEmpty || !isAvailable || _popupShowing || !mounted) return;
+    _popupShowing = true;
+    openOrder(context, pending.first.id).whenComplete(() => _popupShowing = false);
   }
 
   @override
