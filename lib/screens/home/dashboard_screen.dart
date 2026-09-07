@@ -93,17 +93,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _checkForNewOrders(List<DeliveryOrder> pending) {
     final partner = context.read<AppState>().partner;
+    final isAvailable = partner?.isAvailable ?? false;
     final ids = pending.map((o) => o.id).toSet();
+
     if (_firstLoad) {
-      // Don't pop up for orders that were already pending before this
-      // screen opened - only genuinely new ones.
-      _seenPendingIds.addAll(ids);
       _firstLoad = false;
+      // Only silently mark today's pending orders as "already seen" if
+      // the partner was already online when this screen loaded — for
+      // an online partner, these were presumably already shown in a
+      // previous session, so don't re-pop them on every relaunch.
+      // If the partner was OFFLINE at load time, leave the seen-list
+      // empty instead: that's the whole point of this fix — a partner
+      // who opens the app (or goes online) after an order was placed
+      // while everyone was offline must still get shown that order,
+      // not have it silently swallowed as "already seen" before they
+      // ever had a chance to see it.
+      if (isAvailable) {
+        _seenPendingIds.addAll(ids);
+      }
       return;
     }
+
     final newIds = ids.difference(_seenPendingIds);
     _seenPendingIds.addAll(ids);
-    if (newIds.isNotEmpty && (partner?.isAvailable ?? false) && !_popupShowing && mounted) {
+    if (newIds.isNotEmpty && isAvailable && !_popupShowing && mounted) {
       _popupShowing = true;
       openOrder(context, newIds.first).whenComplete(() => _popupShowing = false);
     }
