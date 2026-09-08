@@ -21,10 +21,22 @@ Future<void> openOrder(BuildContext context, int orderId, {bool replace = false}
     Widget? screen;
     switch (order.orderStatus) {
       case 'placed':
-        screen = NewOrderScreen(orderId: orderId);
+        // The restaurant hasn't confirmed this yet (see
+        // Admin\OrderController::updateStatus on the backend) - a
+        // partner has no business being shown this at all. In normal
+        // operation this case shouldn't be reachable (dashboard() only
+        // ever returns 'confirmed' orders as pending), so this only
+        // matters as a defensive fallback for a stale link/notification.
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This order is still awaiting restaurant confirmation.')));
         break;
       case 'confirmed':
+        // Restaurant has confirmed it and it's now up for grabs - this
+        // is the "New Order" (accept/reject) stage.
+        screen = NewOrderScreen(orderId: orderId);
+        break;
       case 'preparing':
+        // A partner has accepted it (see DeliveryApiController::acceptOrder)
+        // and it's being prepared for pickup.
         screen = OrderAcceptedScreen(orderId: orderId);
         break;
       case 'out_for_delivery':

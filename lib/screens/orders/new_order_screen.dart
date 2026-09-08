@@ -28,7 +28,8 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       if (_secondsLeft <= 1) {
         t.cancel();
         // The offer just wasn't acted on in time - back out quietly.
-        // The order stays 'placed' and may still be visible to other
+        // The order stays 'confirmed' (restaurant-confirmed, not yet
+        // accepted by anyone) and may still be visible to other
         // partners (or reappear on this partner's dashboard poll) since
         // this does NOT call reject().
         if (mounted && Navigator.canPop(context)) Navigator.of(context).pop();
