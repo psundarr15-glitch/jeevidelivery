@@ -6,6 +6,8 @@ import '../../theme.dart';
 import '../auth/login_screen.dart';
 import 'info_detail_screen.dart';
 import 'bank_details_screen.dart';
+import 'help_support_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -91,32 +93,12 @@ class ProfileScreen extends StatelessWidget {
                   label: 'Bank Details',
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => BankDetailsScreen(partner: partner))),
                 ),
-                _NavTile(icon: Icons.settings_outlined, label: 'Settings', onTap: () => _showSettings(context)),
+                _NavTile(icon: Icons.settings_outlined, label: 'Settings', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()))),
                 _NavTile(icon: Icons.help_outline, label: 'Help & Support', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()))),
                 const SizedBox(height: 8),
                 _NavTile(icon: Icons.logout, label: 'Logout', color: Colors.red, onTap: () => _logout(context)),
               ],
             ),
-    );
-  }
-
-  void _showSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-              SizedBox(height: 12),
-              Text('More settings (language, notification preferences) are coming soon.'),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

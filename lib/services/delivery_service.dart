@@ -4,6 +4,7 @@ import '../models/delivery_order.dart';
 import '../models/order_detail.dart';
 import '../models/wallet.dart';
 import '../models/cash.dart';
+import '../models/support_info.dart';
 import 'api_client.dart';
 
 class DeliveryService {
@@ -30,6 +31,24 @@ class DeliveryService {
       'default_payout_method': defaultPayoutMethod,
     });
     return res['message']?.toString() ?? 'Payout details updated.';
+  }
+
+  static Future<String> changePassword({required String currentPassword, required String newPassword}) async {
+    final res = await ApiClient.post(ApiConfig.changePassword, {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+    });
+    return res['message']?.toString() ?? 'Password changed.';
+  }
+
+  static Future<SupportInfo> supportInfo() async {
+    final res = await ApiClient.get(ApiConfig.pagesSupport);
+    return SupportInfo.fromJson(res);
+  }
+
+  static Future<StaticContentPage> aboutPage() async {
+    final res = await ApiClient.get(ApiConfig.pagesAbout);
+    return StaticContentPage.fromJson(res);
   }
 
   static Future<bool> toggleAvailability() async {

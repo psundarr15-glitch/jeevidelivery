@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
 
 class InfoDetailScreen extends StatelessWidget {
   final String title;
@@ -41,32 +40,3 @@ class InfoDetailScreen extends StatelessWidget {
   }
 }
 
-class HelpSupportScreen extends StatelessWidget {
-  const HelpSupportScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF3EC),
-      appBar: AppBar(title: const Text('Help & Support')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.support_agent, color: AppTheme.primary, size: 32),
-                SizedBox(height: 10),
-                Text('Need help with an order, your account, or a payout?', style: TextStyle(fontWeight: FontWeight.w600)),
-                SizedBox(height: 6),
-                Text('Reach out to your operations/admin team through the channel they\'ve shared with you — in-app chat support for partners is coming soon.'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

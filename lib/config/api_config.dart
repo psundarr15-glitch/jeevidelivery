@@ -12,7 +12,11 @@ class ApiConfig {
 
   static const String me = '$baseUrl/delivery/me';
   static const String updateBankDetails = '$baseUrl/delivery/profile/bank-details';
+  static const String changePassword = '$baseUrl/delivery/change-password';
   static const String deviceToken = '$baseUrl/delivery/device-token';
+  static const String unregisterDeviceToken = '$baseUrl/delivery/device-token/unregister';
+  static const String pagesSupport = '$baseUrl/pages/support';
+  static const String pagesAbout = '$baseUrl/pages/about';
   static const String toggleAvailability = '$baseUrl/delivery/toggle-availability';
   static const String dashboard = '$baseUrl/delivery/dashboard';
   static String myOrders(String status) => '$baseUrl/delivery/orders?status=$status';
