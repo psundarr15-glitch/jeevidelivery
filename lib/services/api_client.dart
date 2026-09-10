@@ -3,12 +3,12 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-const Duration _apiTimeout = Duration(seconds: 20);
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../navigation.dart';
 import '../state/app_state.dart';
+
+const Duration _apiTimeout = Duration(seconds: 20);
 
 /// Thin wrapper around http that:
 /// - attaches "Authorization: Bearer <token>" automatically
