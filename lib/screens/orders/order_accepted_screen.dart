@@ -36,7 +36,7 @@ class _OrderAcceptedScreenState extends State<OrderAcceptedScreen> {
       // The partner physically picking up the food from the restaurant
       // is what starts the delivery leg - matches order_status jumping
       // straight to out_for_delivery (see backend notes on updateStatus).
-      await DeliveryService.updateStatus(widget.orderId, 'out_for_delivery');
+      await DeliveryService.updateStatus(widget.orderId, 'picked_up');
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OrderPickedUpScreen(orderId: widget.orderId, orderCode: order.orderCode)));
     } catch (e) {

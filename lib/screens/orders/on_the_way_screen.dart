@@ -50,8 +50,20 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
       if (confirmed != true) return;
     }
 
+    final otpController = TextEditingController();
+    final otp = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enter delivery OTP'),
+        content: TextField(controller: otpController, autofocus: true, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: '6-digit OTP')),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')), ElevatedButton(onPressed: () => Navigator.pop(ctx, otpController.text.trim()), child: const Text('Verify'))],
+      ),
+    );
+    otpController.dispose();
+    if (otp == null || otp.length != 6) return;
     setState(() => _busy = true);
     try {
+      await DeliveryService.verifyDeliveryOtp(widget.orderId, otp);
       // The backend records the COD cash-in-hand credit automatically
       // the moment this flips an unpaid COD order to 'delivered' — see
       // DeliveryApiController::updateStatus. The confirmation dialog

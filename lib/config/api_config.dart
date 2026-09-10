@@ -28,5 +28,6 @@ class ApiConfig {
   static String acceptOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/accept';
   static String rejectOrder(int orderId) => '$baseUrl/delivery/orders/$orderId/reject';
   static String updateStatus(int orderId) => '$baseUrl/delivery/orders/$orderId/update-status';
+  static String verifyDeliveryOtp(int orderId) => '$baseUrl/delivery/orders/$orderId/verify-delivery-otp';
   static const String updateLocation = '$baseUrl/delivery/update-location';
 }

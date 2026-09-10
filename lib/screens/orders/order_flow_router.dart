@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/delivery_service.dart';
 import 'new_order_screen.dart';
 import 'order_accepted_screen.dart';
+import 'order_picked_up_screen.dart';
 import 'on_the_way_screen.dart';
 import 'order_delivered_screen.dart';
 
@@ -38,6 +39,9 @@ Future<void> openOrder(BuildContext context, int orderId, {bool replace = false}
         // A partner has accepted it (see DeliveryApiController::acceptOrder)
         // and it's being prepared for pickup.
         screen = OrderAcceptedScreen(orderId: orderId);
+        break;
+      case 'picked_up':
+        screen = OrderPickedUpScreen(orderId: orderId, orderCode: order.orderCode);
         break;
       case 'out_for_delivery':
         screen = OnTheWayScreen(orderId: orderId);

@@ -17,7 +17,7 @@ class LocationTracker {
 
   Future<void> start() async {
     if (_timer != null) return;
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _tick());
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _tick());
     _tick();
   }
 

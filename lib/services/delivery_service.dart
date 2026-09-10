@@ -108,6 +108,9 @@ class DeliveryService {
   static Future<void> updateStatus(int orderId, String status) =>
       ApiClient.post(ApiConfig.updateStatus(orderId), {'order_status': status});
 
+  static Future<void> verifyDeliveryOtp(int orderId, String otp) =>
+      ApiClient.post(ApiConfig.verifyDeliveryOtp(orderId), {'otp': otp});
+
   static Future<void> updateLocation(double lat, double lng) =>
       ApiClient.post(ApiConfig.updateLocation, {'lat': lat, 'lng': lng});
 }

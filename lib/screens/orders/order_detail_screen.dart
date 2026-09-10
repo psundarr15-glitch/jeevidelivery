@@ -7,7 +7,7 @@ import '../../services/delivery_service.dart';
 import '../../services/location_tracker.dart';
 import '../../theme.dart';
 
-const _statusFlow = ['placed', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+const _statusFlow = ['placed', 'confirmed', 'preparing', 'picked_up', 'out_for_delivery', 'delivered'];
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;

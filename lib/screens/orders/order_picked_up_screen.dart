@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/location_tracker.dart';
+import '../../services/delivery_service.dart';
 import 'on_the_way_screen.dart';
 
 class OrderPickedUpScreen extends StatelessWidget {
@@ -47,9 +48,14 @@ class OrderPickedUpScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  LocationTracker.instance.start();
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OnTheWayScreen(orderId: orderId)));
+                onPressed: () async {
+                  try {
+                    await DeliveryService.updateStatus(orderId, 'out_for_delivery');
+                    LocationTracker.instance.start();
+                    if (context.mounted) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OnTheWayScreen(orderId: orderId)));
+                  } catch (e) {
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                  }
                 },
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                 child: const Text('Start Delivery'),
