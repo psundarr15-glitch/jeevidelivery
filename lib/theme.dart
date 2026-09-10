@@ -17,6 +17,16 @@ class AppTheme {
   static const gold = Color(0xFFF7B500); // CTA accent on dark/red backgrounds
   static const success = Color(0xFFD6291B); // rating badges / accent text on white cards
 
+  /// Standard soft shadow for white content cards across the app —
+  /// most screens build cards as `Container(decoration: BoxDecoration(...))`
+  /// rather than the `Card` widget, so this lives here as a shared
+  /// constant rather than in `cardTheme` (which those containers don't
+  /// read from) to apply consistently without duplicating the same
+  /// BoxShadow literal in every screen.
+  static const cardShadow = [
+    BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 3)),
+  ];
+
   static ThemeData light() {
     return ThemeData(
       useMaterial3: true,

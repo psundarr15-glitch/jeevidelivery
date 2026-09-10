@@ -25,6 +25,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
   late final TextEditingController _ifsc;
   late final TextEditingController _upi;
   late String _defaultMethod; // 'bank' | 'upi'
+  bool _obscureAccount = true;
   bool _saving = false;
 
   @override
@@ -35,6 +36,10 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
     _ifsc = TextEditingController(text: widget.partner.bankIfsc ?? '');
     _upi = TextEditingController(text: widget.partner.upiId ?? '');
     _defaultMethod = widget.partner.defaultPayoutMethod;
+    // Only mask if there's already a saved number to protect — a
+    // blank field (first-time entry) should be visible so the partner
+    // can see what they're typing.
+    _obscureAccount = _accountNumber.text.isNotEmpty;
   }
 
   @override
@@ -129,7 +134,14 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
                 TextFormField(
                   controller: _accountNumber,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Account Number'),
+                  obscureText: _obscureAccount,
+                  decoration: InputDecoration(
+                    labelText: 'Account Number',
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureAccount ? Icons.visibility_off : Icons.visibility, size: 20),
+                      onPressed: () => setState(() => _obscureAccount = !_obscureAccount),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextFormField(

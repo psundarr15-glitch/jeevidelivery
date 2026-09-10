@@ -6,6 +6,7 @@ class DeliveryOrder {
   final double deliveryFee;
   final String paymentMethod;
   final String? placedAt;
+  final String? deliveredAt;
   final String customerName;
   final String? customerPhone;
   final String restaurantName;
@@ -23,6 +24,7 @@ class DeliveryOrder {
     required this.deliveryFee,
     required this.paymentMethod,
     this.placedAt,
+    this.deliveredAt,
     required this.customerName,
     this.customerPhone,
     required this.restaurantName,
@@ -41,6 +43,7 @@ class DeliveryOrder {
         deliveryFee: double.tryParse(j['delivery_fee']?.toString() ?? '') ?? 0,
         paymentMethod: j['payment_method']?.toString() ?? 'cod',
         placedAt: j['placed_at']?.toString(),
+        deliveredAt: j['delivered_at']?.toString(),
         customerName: j['customer_name']?.toString() ?? '',
         customerPhone: j['customer_phone']?.toString(),
         restaurantName: j['restaurant_name']?.toString() ?? '',
