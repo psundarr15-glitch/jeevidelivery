@@ -75,8 +75,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3EC),
-      appBar: AppBar(title: const Text('Order Details')),
+      backgroundColor: const Color(0xFFF7F8FA),
+      appBar: AppBar(title: const Text('Order Details'), backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
       body: FutureBuilder<OrderDetail>(
         future: _future,
         builder: (context, snap) {
@@ -95,7 +95,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 6))]),
                 child: Row(
                   children: [
                     Expanded(
@@ -159,7 +159,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   height: 160,
                   margin: const EdgeInsets.only(bottom: 14),
                   clipBehavior: Clip.hardEdge,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
                   child: FlutterMap(
                     options: MapOptions(initialCenter: LatLng(o.address!.lat!, o.address!.lng!), initialZoom: 14, interactionOptions: const InteractionOptions(flags: InteractiveFlag.none)),
                     children: [
@@ -261,7 +261,7 @@ class _CardSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 6))]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -287,7 +287,7 @@ class _ActionChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(color: const Color(0xFFFFF3EC), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: const Color(0xFFF7F8FA), borderRadius: BorderRadius.circular(20)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

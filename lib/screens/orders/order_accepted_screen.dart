@@ -49,8 +49,8 @@ class _OrderAcceptedScreenState extends State<OrderAcceptedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3EC),
-      appBar: AppBar(title: const Text('Order Details')),
+      backgroundColor: const Color(0xFFF7F8FA),
+      appBar: AppBar(title: const Text('Order Details'), backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
       body: FutureBuilder<OrderDetail>(
         future: _future,
         builder: (context, snap) {
@@ -77,7 +77,7 @@ class _OrderAcceptedScreenState extends State<OrderAcceptedScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 6))]),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -107,7 +107,7 @@ class _OrderAcceptedScreenState extends State<OrderAcceptedScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _busy ? null : _markPickedUp,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                   child: _busy
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Text('Picked Up'),
@@ -133,7 +133,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 6))]),
       child: Row(
         children: [
           Expanded(
