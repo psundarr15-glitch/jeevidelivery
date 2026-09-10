@@ -77,9 +77,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('New Order'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         actions: const [Padding(padding: EdgeInsets.only(right: 16), child: Icon(Icons.notifications_none))],
       ),
       body: FutureBuilder<OrderDetail>(
@@ -113,7 +110,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _busy ? null : _reject,
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.grey.shade700, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.grey.shade700, padding: const EdgeInsets.symmetric(vertical: 16)),
                         child: const Text('Reject'),
                       ),
                     ),
@@ -121,7 +118,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: _busy ? null : _accept,
-                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                         child: _busy
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Text('Accept'),
@@ -151,7 +148,7 @@ class _StopCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFFF7F8FA), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: const Color(0xFFFFF3EC), borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           Expanded(
@@ -188,7 +185,7 @@ class _MetricBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(color: const Color(0xFFF7F8FA), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: const Color(0xFFFFF3EC), borderRadius: BorderRadius.circular(14)),
       child: Column(
         children: [
           Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),

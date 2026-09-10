@@ -44,8 +44,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      appBar: AppBar(title: const Text('My Orders'), backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
+      backgroundColor: const Color(0xFFFFF3EC),
+      appBar: AppBar(title: const Text('My Orders')),
       body: Column(
         children: [
           SizedBox(
@@ -88,12 +88,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     itemBuilder: (context, i) {
                       final o = orders[i];
                       return InkWell(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(14),
                         onTap: () => openOrder(context, o.id),
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 6))]),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
                           child: Row(
                             children: [
                               Expanded(

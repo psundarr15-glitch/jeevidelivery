@@ -72,7 +72,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('On the Way'), backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
+      appBar: AppBar(title: const Text('On the Way')),
       body: FutureBuilder<OrderDetail>(
         future: _future,
         builder: (context, snap) {
@@ -102,7 +102,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                           ]),
                         ],
                       )
-                    : Container(color: const Color(0xFFF7F8FA), child: const Center(child: Icon(Icons.map_outlined, size: 48, color: Colors.grey))),
+                    : Container(color: const Color(0xFFFFF3EC), child: const Center(child: Icon(Icons.map_outlined, size: 48, color: Colors.grey))),
               ),
               Container(
                 padding: const EdgeInsets.all(18),
@@ -138,7 +138,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _busy ? null : () => _reachedCustomer(o),
-                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                         child: _busy
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : Text(o.paymentMethod == 'cod' && o.paymentStatus != 'paid' ? 'Collect ₹${o.total.toStringAsFixed(0)} & Mark Delivered' : 'Reached Customer'),

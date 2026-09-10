@@ -12,7 +12,7 @@ class OrderPickedUpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Order Picked Up'), backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
+      appBar: AppBar(title: const Text('Order Picked Up')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -21,7 +21,7 @@ class OrderPickedUpScreen extends StatelessWidget {
             Container(
               width: 180,
               height: 180,
-              decoration: BoxDecoration(color: const Color(0xFFF7F8FA), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: const Color(0xFFFFF3EC), shape: BoxShape.circle),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -51,7 +51,7 @@ class OrderPickedUpScreen extends StatelessWidget {
                   LocationTracker.instance.start();
                   Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OnTheWayScreen(orderId: orderId)));
                 },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                 child: const Text('Start Delivery'),
               ),
             ),

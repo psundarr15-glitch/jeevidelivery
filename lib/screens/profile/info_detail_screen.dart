@@ -32,7 +32,7 @@ class InfoDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text('To update these details, contact your operations team for now — in-app editing is coming soon.',
+          Text('Identity and vehicle details are managed by the operations team for verification and safety.',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
         ],
       ),
