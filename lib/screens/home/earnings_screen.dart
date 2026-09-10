@@ -91,10 +91,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
                     children: [
                       _Row(label: 'Order Earnings', value: '₹${amount.toStringAsFixed(0)}'),
                       _divider(),
-                      _Row(label: 'Tips', value: '₹0', hint: 'Coming soon'),
-                      _divider(),
-                      _Row(label: 'Incentives', value: '₹0', hint: 'Coming soon'),
-                      _divider(),
                       _Row(label: 'Completed Orders', value: '$orders'),
                     ],
                   ),

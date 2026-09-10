@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+const Duration _apiTimeout = Duration(seconds: 20);
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../navigation.dart';
@@ -104,7 +107,16 @@ class ApiClient {
 
   static Future<Map<String, dynamic>> get(String url) async {
     final headers = await _headers();
-    final res = await http.get(Uri.parse(url), headers: headers);
+    http.Response res;
+    try {
+      res = await http.get(Uri.parse(url), headers: headers).timeout(_apiTimeout);
+    } on SocketException {
+      throw ApiException('No internet connection. Please check your network and try again.', 0);
+    } on http.ClientException {
+      throw ApiException('Could not connect to the server. Please try again.', 0);
+    } on TimeoutException {
+      throw ApiException('The server took too long to respond. Please try again.', 0);
+    }
     return _decode(res, hadToken: headers.containsKey('Authorization'));
   }
 
@@ -115,7 +127,16 @@ class ApiClient {
     });
 
     final headers = await _headers();
-    final res = await http.post(Uri.parse(url), headers: headers, body: body);
+    http.Response res;
+    try {
+      res = await http.post(Uri.parse(url), headers: headers, body: body).timeout(_apiTimeout);
+    } on SocketException {
+      throw ApiException('No internet connection. Please check your network and try again.', 0);
+    } on http.ClientException {
+      throw ApiException('Could not connect to the server. Please try again.', 0);
+    } on TimeoutException {
+      throw ApiException('The server took too long to respond. Please try again.', 0);
+    }
     return _decode(res, hadToken: headers.containsKey('Authorization'));
   }
 
@@ -144,7 +165,14 @@ class ApiClient {
       }
     }
 
-    final streamed = await request.send();
+    http.StreamedResponse streamed;
+    try {
+      streamed = await request.send().timeout(_apiTimeout);
+    } on SocketException {
+      throw ApiException('No internet connection. Please check your network and try again.', 0);
+    } on TimeoutException {
+      throw ApiException('The upload took too long. Please try again.', 0);
+    }
     final res = await http.Response.fromStream(streamed);
     return _decode(res, hadToken: headers.containsKey('Authorization'));
   }
