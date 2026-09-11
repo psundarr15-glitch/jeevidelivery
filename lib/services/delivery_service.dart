@@ -108,9 +108,6 @@ class DeliveryService {
   static Future<void> updateStatus(int orderId, String status) =>
       ApiClient.post(ApiConfig.updateStatus(orderId), {'order_status': status});
 
-  static Future<void> sendDeliveryOtp(int orderId) =>
-      ApiClient.post(ApiConfig.sendDeliveryOtp(orderId));
-
   static Future<void> verifyDeliveryOtp(int orderId, String otp) =>
       ApiClient.post(ApiConfig.verifyDeliveryOtp(orderId), {'otp': otp});
 

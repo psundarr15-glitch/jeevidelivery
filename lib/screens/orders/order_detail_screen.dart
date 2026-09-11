@@ -6,6 +6,7 @@ import '../../models/order_detail.dart';
 import '../../services/delivery_service.dart';
 import '../../services/location_tracker.dart';
 import '../../theme.dart';
+import '../chat/chat_screen.dart';
 
 const _statusFlow = ['placed', 'confirmed', 'preparing', 'picked_up', 'out_for_delivery', 'delivered'];
 
@@ -146,6 +147,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       Row(
                         children: [
                           _ActionChip(icon: Icons.call, label: 'Call customer', onTap: () => _call(o.customerPhone)),
+                        const SizedBox(width: 8),
+                        _ActionChip(icon: Icons.chat, label: 'Chat', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeliveryChatScreen(orderId: widget.orderId, customerName: o.customerName)))),
                           const SizedBox(width: 8),
                           _ActionChip(icon: Icons.directions, label: 'Directions', onTap: () => _openMap(o.address!.lat, o.address!.lng)),
                         ],

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/order_detail.dart';
 import '../../services/delivery_service.dart';
+import '../chat/chat_screen.dart';
 import '../../services/location_tracker.dart';
 import '../../theme.dart';
 import 'order_delivered_screen.dart';
@@ -222,6 +223,8 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                         InkWell(
                           customBorder: const CircleBorder(),
                           onTap: () => _call(o.customerPhone),
+                          const SizedBox(width: 8),
+                          _ActionChip(icon: Icons.chat, label: 'Chat', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeliveryChatScreen(orderId: widget.orderId, customerName: o.customerName)))),
                           child: const CircleAvatar(backgroundColor: AppTheme.primary, radius: 18, child: Icon(Icons.call, color: Colors.white, size: 17)),
                         ),
                       ],
