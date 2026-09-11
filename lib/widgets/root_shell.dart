@@ -6,6 +6,7 @@ import '../screens/orders/my_orders_screen.dart';
 import '../screens/home/earnings_screen.dart';
 import '../screens/wallet/wallet_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/chat/chats_screen.dart';
 
 class RootShell extends StatefulWidget {
   const RootShell({super.key});
@@ -22,6 +23,7 @@ class _RootShellState extends State<RootShell> {
     EarningsScreen(),
     WalletScreen(),
     ProfileScreen(),
+    DeliveryChatsScreen(),
   ];
 
   @override
@@ -43,6 +45,7 @@ class _RootShellState extends State<RootShell> {
           NavigationDestination(icon: Icon(Icons.currency_rupee_outlined), selectedIcon: Icon(Icons.currency_rupee), label: 'Earnings'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'Chats'),
         ],
       ),
     );

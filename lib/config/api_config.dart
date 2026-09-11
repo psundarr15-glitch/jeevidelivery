@@ -31,5 +31,7 @@ class ApiConfig {
   static String sendDeliveryOtp(int orderId) => '$baseUrl/delivery/orders/$orderId/send-delivery-otp';
   static String verifyDeliveryOtp(int orderId) => '$baseUrl/delivery/orders/$orderId/verify-delivery-otp';
   static const String updateLocation = '$baseUrl/delivery/update-location';
-  static String chatFirebaseToken(int orderId) => '$baseUrl/delivery/chat/firebase-token?order_id=$orderId';
+  static String chatFirebaseToken([int? orderId]) => orderId == null
+      ? '$baseUrl/delivery/chat/firebase-token'
+      : '$baseUrl/delivery/chat/firebase-token?order_id=$orderId';
 }

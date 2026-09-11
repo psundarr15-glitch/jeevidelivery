@@ -238,6 +238,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                               builder: (_) => DeliveryChatScreen(
                                 orderId: widget.orderId,
                                 customerName: o.customerName,
+                                orderCode: o.orderCode,
                               ),
                             ),
                           ),
