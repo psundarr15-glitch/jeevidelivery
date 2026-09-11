@@ -54,10 +54,14 @@ Future<void> openOrder(BuildContext context, int orderId, {bool replace = false}
     }
     if (screen == null || !context.mounted) return;
 
+    // Await the pushed route. The dashboard uses this future to keep its
+    // pending-order popup locked while the partner is working on the order.
+    // Without awaiting, the popup flag resets immediately and the same
+    // confirmed order can be opened again by the 2-second poll.
     if (replace) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => screen!));
+      await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => screen!));
     } else {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen!));
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen!));
     }
   } catch (e) {
     if (context.mounted) {

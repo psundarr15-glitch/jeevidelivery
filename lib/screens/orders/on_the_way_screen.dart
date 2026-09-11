@@ -50,25 +50,30 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
       if (confirmed != true) return;
     }
 
-    final otpController = TextEditingController();
-    final otp = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enter delivery OTP'),
-        content: TextField(controller: otpController, autofocus: true, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: '6-digit OTP')),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')), ElevatedButton(onPressed: () => Navigator.pop(ctx, otpController.text.trim()), child: const Text('Verify'))],
-      ),
-    );
-    otpController.dispose();
-    if (otp == null || otp.length != 6) return;
+    await _requestAndVerifyOtp(o);
+  }
+
+  Future<void> _requestAndVerifyOtp(OrderDetail o) async {
     setState(() => _busy = true);
     try {
-      await DeliveryService.verifyDeliveryOtp(widget.orderId, otp);
-      // The backend records the COD cash-in-hand credit automatically
-      // the moment this flips an unpaid COD order to 'delivered' — see
-      // DeliveryApiController::updateStatus. The confirmation dialog
-      // above exists so the partner explicitly acknowledges it, not
-      // because the app itself does the bookkeeping.
+      // OTP is intentionally generated only at the customer's doorstep.
+      // Starting the trip never sends an OTP.
+      await DeliveryService.sendDeliveryOtp(widget.orderId);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+      return;
+    }
+    if (mounted) setState(() => _busy = false);
+
+    if (!mounted) return;
+    final verified = await _showOtpDialog(o);
+    if (verified != true) return;
+
+    setState(() => _busy = true);
+    try {
       await DeliveryService.updateStatus(widget.orderId, 'delivered');
       LocationTracker.instance.stop();
       if (!mounted) return;
@@ -78,6 +83,82 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<bool?> _showOtpDialog(OrderDetail o) async {
+    final controller = TextEditingController();
+    bool sending = false;
+    bool verifying = false;
+    String? error;
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Confirm Delivery'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Ask ${o.customerName} for the latest 6-digit delivery OTP.'),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  labelText: 'Delivery OTP',
+                  errorText: error,
+                  counterText: '',
+                ),
+                onChanged: (_) => setDialogState(() {}),
+              ),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                onPressed: sending || verifying
+                    ? null
+                    : () async {
+                        setDialogState(() { sending = true; error = null; });
+                        try {
+                          await DeliveryService.sendDeliveryOtp(widget.orderId);
+                          controller.clear();
+                          if (ctx.mounted) {
+                            setDialogState(() { sending = false; });
+                            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('A fresh OTP has been sent to the customer.')));
+                          }
+                        } catch (e) {
+                          if (ctx.mounted) setDialogState(() { sending = false; error = e.toString(); });
+                        }
+                      },
+                icon: sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.refresh),
+                label: const Text('Resend OTP'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: sending || verifying ? null : () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: sending || verifying || controller.text.trim().length != 6
+                  ? null
+                  : () async {
+                      setDialogState(() { verifying = true; error = null; });
+                      try {
+                        await DeliveryService.verifyDeliveryOtp(widget.orderId, controller.text.trim());
+                        if (ctx.mounted) Navigator.pop(ctx, true);
+                      } catch (e) {
+                        if (ctx.mounted) setDialogState(() { verifying = false; error = e.toString(); });
+                      }
+                    },
+              child: verifying ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Verify & Deliver'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    return result;
   }
 
   @override
@@ -153,7 +234,7 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                         style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                         child: _busy
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : Text(o.paymentMethod == 'cod' && o.paymentStatus != 'paid' ? 'Collect ₹${o.total.toStringAsFixed(0)} & Mark Delivered' : 'Reached Customer'),
+                            : Text(o.paymentMethod == 'cod' && o.paymentStatus != 'paid' ? 'Collect ₹${o.total.toStringAsFixed(0)} & Send OTP' : 'Reached Customer & Send OTP'),
                       ),
                     ),
                   ],
