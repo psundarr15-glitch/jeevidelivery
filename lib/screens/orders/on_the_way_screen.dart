@@ -230,12 +230,15 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                             child: Icon(Icons.call, color: Colors.white, size: 17),
                           ),
                         ),
-                        _ActionChip(
-                          icon: Icons.chat,
-                          label: 'Chat',
-                          onTap: () => Navigator.of(context).push(
+                        ActionChip(
+                          avatar: const Icon(Icons.chat, size: 17),
+                          label: const Text('Chat'),
+                          onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => DeliveryChatScreen(orderId: widget.orderId, customerName: o.customerName),
+                              builder: (_) => DeliveryChatScreen(
+                                orderId: widget.orderId,
+                                customerName: o.customerName,
+                              ),
                             ),
                           ),
                         ),
