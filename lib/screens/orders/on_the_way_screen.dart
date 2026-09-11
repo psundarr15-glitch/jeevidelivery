@@ -220,12 +220,24 @@ class _OnTheWayScreenState extends State<OnTheWayScreen> {
                             ],
                           ),
                         ),
-                        InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => _call(o.customerPhone),
-                          const SizedBox(width: 8),
-                          _ActionChip(icon: Icons.chat, label: 'Chat', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeliveryChatScreen(orderId: widget.orderId, customerName: o.customerName)))),
-                          child: const CircleAvatar(backgroundColor: AppTheme.primary, radius: 18, child: Icon(Icons.call, color: Colors.white, size: 17)),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Call customer',
+                          onPressed: () => _call(o.customerPhone),
+                          icon: const CircleAvatar(
+                            backgroundColor: AppTheme.primary,
+                            radius: 18,
+                            child: Icon(Icons.call, color: Colors.white, size: 17),
+                          ),
+                        ),
+                        _ActionChip(
+                          icon: Icons.chat,
+                          label: 'Chat',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => DeliveryChatScreen(orderId: widget.orderId, customerName: o.customerName),
+                            ),
+                          ),
                         ),
                       ],
                     ),
